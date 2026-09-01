@@ -4,8 +4,240 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>持仓地图</title>
+  <style>
+    :root {
+      --bg: #f3f5f7;
+      --card: #ffffff;
+      --ink: #1b2430;
+      --muted: #6b7785;
+      --line: #e8edf2;
+      --up: #0f9d58;
+      --down: #d93025;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "PingFang SC", "Noto Sans SC", "Helvetica Neue", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    .wrap {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+    h1 { margin: 0 0 6px; font-size: 22px; }
+    .sub { color: var(--muted); font-size: 13px; margin: 0 0 16px; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .stat {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 14px 16px;
+      box-shadow: 0 8px 20px rgba(20, 30, 45, 0.05);
+    }
+    .stat .k { font-size: 12px; color: var(--muted); }
+    .stat .v { font-size: 20px; font-weight: 700; margin-top: 4px; }
+    .stat .s { font-size: 12px; margin-top: 2px; color: var(--muted); }
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 14px;
+      box-shadow: 0 8px 24px rgba(20, 30, 45, 0.06);
+    }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 980px; }
+    th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+    th { color: var(--muted); font-weight: 600; font-size: 12px; white-space: nowrap; }
+    input, select {
+      width: 100%;
+      border: 1px solid #d9e0e7;
+      border-radius: 8px;
+      padding: 6px 8px;
+      font: inherit;
+      background: #fff;
+    }
+    .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .up { color: var(--up); }
+    .down { color: var(--down); }
+    button {
+      border: 0;
+      background: #1b2430;
+      color: #fff;
+      border-radius: 10px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .row-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .map-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+    #tree { width: 100%; height: 520px; border-radius: 14px; overflow: hidden; background: #f7f8fa; }
+    .hint { font-size: 12px; color: var(--muted); margin-top: 10px; }
+    .nav { display: flex; gap: 8px; margin: 12px 0 16px; flex-wrap: wrap; }
+    .nav button { background: #e8edf2; color: #1b2430; }
+    .nav button.on { background: #1b2430; color: #fff; }
+    .page { display: none; }
+    .page.on { display: block; }
+    textarea {
+      width: 100%; min-height: 220px; border: 1px solid #d9e0e7;
+      border-radius: 10px; padding: 10px; font: inherit; resize: vertical;
+    }
+    @media (max-width: 800px) {
+      .stats { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
 </head>
 <body>
-<p>placeholder</p>
-</body>
-</html>
+  <div class="wrap">
+    <h1>持仓地图</h1>
+    <p class="sub">股数和成本自己填。股票现价可点「拉取公开现价」，不登录券商账号。地图按当前市值画面积。</p>
+    <div class="nav">
+      <button type="button" class="on" data-page="holdings">持仓</button>
+      <button type="button" data-page="watch">观察池</button>
+      <button type="button" data-page="notes">备忘</button>
+    </div>
+
+    <section class="page on" id="page-holdings">
+    <section class="stats" id="stats"></section>
+
+    <section class="card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>名称</th>
+              <th>代码</th>
+              <th>类型</th>
+              <th>股数</th>
+              <th>单股成本</th>
+              <th>总成本 U</th>
+              <th>现价</th>
+              <th>当前市值 U</th>
+              <th>浮盈亏</th>
+              <th>仓位%</th>
+              <th>颜色</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <div class="row-actions">
+        <button type="button" id="add">加一行</button>
+        <button type="button" id="refreshPx" style="background:#0f7b4a">拉取公开现价</button>
+        <button type="button" id="reset" style="background:#445261">恢复这份仓位</button>
+        <span id="pxStatus" class="hint" style="margin:0;align-self:center"></span>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="map-head">
+        <strong>持仓地图</strong>
+        <span class="sub" style="margin:0">方块面积 = 当前市值占比</span>
+      </div>
+      <div id="tree"></div>
+      <p class="hint">现价来自 Yahoo 公开行情，不登录任何券商账号。现金 U 按 1:1。场外基金没有公开报价，市值先等于成本。打开页面会自动拉一次，也可点「拉取公开现价」。</p>
+    </section>
+    </section>
+
+    <section class="page" id="page-watch">
+      <section class="card">
+        <p class="hint" style="margin-top:0">先记标的，不接账号。以后要加价格或笔记，直接跟我说。</p>
+        <textarea id="watchBox" placeholder="例如：&#10;NOK  光模块&#10;CRCL  等回调再看网格"></textarea>
+      </section>
+    </section>
+    <section class="page" id="page-notes">
+      <section class="card">
+        <textarea id="notesBox" placeholder="仓位理由、待办、下次加减仓条件…"></textarea>
+      </section>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <script>
+    const KEY = "holdings-map-v5";
+    const defaultHoldings = [
+      { name: "现金 U", ticker: "USDT", type: "cash", shares: 29740, cost: 29740, price: 1, color: "#26A17B" },
+      { name: "Circle", ticker: "CRCL", type: "stock", shares: 130, cost: 9960, price: 91, color: "#4C6FFF" },
+      { name: "Rocket Lab", ticker: "RKLB", type: "stock", shares: 33, cost: 2340, price: 62.5, color: "#E23B2C" },
+      { name: "场外基金", ticker: "OTC", type: "fund", shares: 0, cost: 2240, price: 0, color: "#2B2F3A" },
+      { name: "Memory ETF", ticker: "DRAM", type: "stock", shares: 12.6, cost: 720, price: 56, color: "#7B5CFF" }
+    ];
+
+    let holdings = load();
+    const tbody = document.getElementById("rows");
+    const chart = echarts.init(document.getElementById("tree"));
+
+    function load() {
+      try {
+        const raw = localStorage.getItem(KEY);
+        if (raw) return JSON.parse(raw);
+      } catch (e) {}
+      return defaultHoldings.map((x) => ({ ...x }));
+    }
+    function save() { localStorage.setItem(KEY, JSON.stringify(holdings)); }
+
+    function n(v) { return Number(v) || 0; }
+    function money(v) {
+      return n(v).toLocaleString("en-US", { maximumFractionDigits: 2 });
+    }
+    function costPerShare(item) {
+      if (item.type === "cash") return 1;
+      if (n(item.shares) > 0) return n(item.cost) / n(item.shares);
+      return 0;
+    }
+    function marketValue(item) {
+      if (item.type === "cash") return n(item.shares) || n(item.cost);
+      if (n(item.shares) > 0 && n(item.price) > 0) return n(item.shares) * n(item.price);
+      return n(item.cost);
+    }
+    function pnl(item) { return marketValue(item) - n(item.cost); }
+    function totals() {
+      const cost = holdings.reduce((a, b) => a + n(b.cost), 0);
+      const value = holdings.reduce((a, b) => a + marketValue(b), 0);
+      const cash = holdings.filter((x) => x.type === "cash").reduce((a, b) => a + marketValue(b), 0);
+      const invested = value - cash;
+      return { cost, value, cash, invested, pnl: value - cost };
+    }
+
+    function renderStats() {
+      const t = totals();
+      const cls = t.pnl >= 0 ? "up" : "down";
+      const sign = t.pnl >= 0 ? "+" : "";
+      document.getElementById("stats").innerHTML = `
+        <div class="stat"><div class="k">总市值</div><div class="v">${money(t.value)} U</div><div class="s">按现价估算</div></div>
+        <div class="stat"><div class="k">现金 U</div><div class="v">${money(t.cash)} U</div><div class="s">占总市值 ${(t.value ? t.cash / t.value * 100 : 0).toFixed(1)}%</div></div>
+        <div class="stat"><div class="k">非现金仓位</div><div class="v">${money(t.invested)} U</div><div class="s">股票+基金 ${(t.value ? t.invested / t.value * 100 : 0).toFixed(1)}%</div></div>
+        <div class="stat"><div class="k">总成本</div><div class="v">${money(t.cost)} U</div><div class="s">投入本金</div></div>
+        <div class="stat"><div class="k">浮动盈亏</div><div class="v ${cls}">${sign}${money(t.pnl)} U</div><div class="s ${cls}">${t.cost ? sign + (t.pnl / t.cost * 100).toFixed(2) + "%" : "—"}</div></div>
+      `;
+    }
+
+    function renderTable() {
+      const t = totals();
+      tbody.innerHTML = "";
+      holdings.forEach((item, i) => {
+        const cps = costPerShare(item);
+        const mv = marketValue(item);
+        const p = pnl(item);
+        const w = t.value ? mv / t.value * 100 : 0;
+        const cls = p > 0.005 ? "up" : p < -0.005 ? "down" : "";
+        const sign = p > 0.005 ? "+" : "";
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><input data-k="name" data-i="${i}" value="${esc(item.name)}" /></td>
+          <td><input data-k="ticker" data-i="${i}" value="${esc(item.ticker)}" /></td>
+          <td>
+            <select data-k="type" data-i="${i}">
+              <option value="stock" ${item.type === "stock" ? "selected" : ""}>股票/ETF</option>
+              <option value="fund" ${item.type === "fund" ? "selected" : ""}>场外基金</option>
+              <option value="cash" ${item.type === "cash" ? "selected" : ""}>现金 U</option>
+            </select>
+          </td>
+          <td><input data-k="shares" data-i="${i}" type="number" min="0" step="0.01" value="${item.shares}" /></td>
+          <td class="num">${item.type === "fund\
