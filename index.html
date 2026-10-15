@@ -14,7 +14,9 @@
   .kpis { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; }
   .kpi { background:var(--card); border-radius:16px; padding:12px 14px; box-shadow:0 8px 20px rgb(28 25 23 / .05); }
   .kpi b { display:block; font-size:18px; margin-top:2px; }
-  .kpi span { color:var(--muted); font-size:12px; }
+  .kpi small { display:block; margin-top:2px; color:var(--muted); font-size:12px; font-weight:400; }
+  .kpi.up b, .kpi.up small { color:var(--up); }
+  .kpi.down b, .kpi.down small { color:var(--down); }
   .card { background:var(--card); border-radius:16px; padding:12px; margin-bottom:10px; box-shadow:0 8px 20px rgb(28 25 23 / .05); }
   .row { display:flex; justify-content:space-between; gap:8px; }
   .name { font-weight:600; }
@@ -75,14 +77,20 @@ function totals() {
   const cashCost = lots.filter(x=>x.type==="cash").reduce((a,b)=>a+Number(b.cost||0),0);
   return {value, cash, invested:value-cash, investedCost:cost-cashCost, pnl:value-cost};
 }
+function pct(n) { return (n>=0?"+":"") + n.toFixed(2) + "%"; }
+function share(part, whole) { return whole ? (part / whole * 100).toFixed(1) + "%" : "0%"; }
 function render() {
   const t = totals();
-  document.getElementById("kpis").innerHTML = [
-    ["总市值", money(t.value)+" U"],
-    ["现金 U", money(t.cash)+" U"],
-    ["非现金仓位", money(t.invested)+" U"],
-    ["浮动盈亏", (t.pnl>=0?"+":"")+money(t.pnl)+" U"]
-  ].map(([k,v])=>`<div class="kpi"><span>${k}</span><b>${v}</b></div>`).join("");
+  const up = t.pnl >= 0;
+  const cards = [
+    ["总市值", money(t.value)+" U", "按现价", ""],
+    ["现金 U", money(t.cash)+" U", share(t.cash, t.value), ""],
+    ["非现金仓位", money(t.invested)+" U", share(t.invested, t.value), ""],
+    ["非现金仓位成本", money(t.investedCost)+" U", "股票和基金本金", ""],
+    ["总成本", money(t.cost)+" U", "含现金", ""],
+    ["浮动盈亏", (up?"+":"")+money(t.pnl)+" U", t.investedCost ? pct(t.pnl / t.investedCost * 100) : "—", up?"up":"down"]
+  ];
+  document.getElementById("kpis").innerHTML = cards.map(([k,v,s,tone])=>`<div class="kpi ${tone}"><span>${k}</span><b>${v}</b><small>${s}</small></div>`).join("");
   document.getElementById("lots").innerHTML = lots.map((l,i) => {
     const v = mv(l);
     const p = v - Number(l.cost||0);
