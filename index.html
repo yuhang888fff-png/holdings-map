@@ -1,92 +1,144 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>持仓地图</title>
-  <style>
-    :root { --bg:#f3f5f7; --card:#fff; --ink:#1b2430; --muted:#6b7785; --line:#e8edf2; --up:#0f9d58; --down:#d93025; }
-    *{box-sizing:border-box}
-    body{margin:0;font-family:"PingFang SC","Noto Sans SC","Helvetica Neue",sans-serif;background:var(--bg);color:var(--ink)}
-    .wrap{max-width:1180px;margin:0 auto;padding:24px 16px 48px}
-    h1{margin:0 0 6px;font-size:22px}
-    .sub{color:var(--muted);font-size:13px;margin:0 0 16px}
-    .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px}
-    .stat{background:var(--card);border-radius:14px;padding:14px 16px;box-shadow:0 8px 20px rgba(20,30,45,.05)}
-    .stat .k{font-size:12px;color:var(--muted)}
-    .stat .v{font-size:20px;font-weight:700;margin-top:4px}
-    .stat .s{font-size:12px;margin-top:2px;color:var(--muted)}
-    .card{background:var(--card);border-radius:16px;padding:14px;margin-bottom:14px;box-shadow:0 8px 24px rgba(20,30,45,.06)}
-    .table-wrap{overflow-x:auto}
-    table{width:100%;border-collapse:collapse;font-size:13px;min-width:980px}
-    th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
-    th{color:var(--muted);font-weight:600;font-size:12px;white-space:nowrap}
-    input,select{width:100%;border:1px solid #d9e0e7;border-radius:8px;padding:6px 8px;font:inherit;background:#fff}
-    .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-    .up{color:var(--up)}
-    .down{color:var(--down)}
-    button{border:0;background:#1b2430;color:#fff;border-radius:10px;padding:8px 12px;cursor:pointer;font-weight:600}
-    .row-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
-    .map-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
-    #tree{width:100%;height:520px;border-radius:14px;overflow:hidden;background:#f7f8fa}
-    .hint{font-size:12px;color:var(--muted);margin-top:10px}
-    .nav{display:flex;gap:8px;margin:12px 0 16px;flex-wrap:wrap}
-    .nav button{background:#e8edf2;color:#1b2430}
-    .nav button.on{background:#1b2430;color:#fff}
-    .page{display:none}
-    .page.on{display:block}
-    textarea{width:100%;min-height:220px;border:1px solid #d9e0e7;border-radius:10px;padding:10px;font:inherit;resize:vertical}
-    #gate{position:fixed;inset:0;background:#f3f5f7;display:flex;align-items:center;justify-content:center;z-index:99}
-    #gate.ok{display:none}
-    .gate-box{background:#fff;border-radius:16px;padding:24px;width:min(360px,92vw);box-shadow:0 12px 32px rgba(20,30,45,.08)}
-    .gate-box h2{font-size:18px;margin-bottom:8px}
-    .gate-box p{font-size:13px;color:var(--muted);margin-bottom:12px}
-    @media (max-width:800px){.stats{grid-template-columns:1fr 1fr}}
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>持仓地图</title>
+<style>
+  :root { --paper:#f3efe6; --card:#fffcf7; --ink:#1c1917; --muted:#6f6a63; --line:#e4ddd1; --up:#1f7a4d; --down:#b42318; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:"PingFang SC","Noto Sans SC",sans-serif; }
+  main { max-width:720px; margin:0 auto; padding:16px 12px 40px; }
+  h1 { font-size:28px; margin:0 0 4px; font-weight:500; }
+  p.sub { color:var(--muted); font-size:13px; margin:0 0 14px; }
+  .kpis { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; }
+  .kpi { background:var(--card); border-radius:16px; padding:12px 14px; box-shadow:0 8px 20px rgb(28 25 23 / .05); }
+  .kpi b { display:block; font-size:18px; margin-top:2px; }
+  .kpi span { color:var(--muted); font-size:12px; }
+  .card { background:var(--card); border-radius:16px; padding:12px; margin-bottom:10px; box-shadow:0 8px 20px rgb(28 25 23 / .05); }
+  .row { display:flex; justify-content:space-between; gap:8px; }
+  .name { font-weight:600; }
+  .ticker { color:var(--muted); font-size:12px; }
+  .mv { text-align:right; font-variant-numeric:tabular-nums; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+  label { font-size:12px; color:var(--muted); display:block; }
+  input { width:100%; margin-top:4px; height:40px; border:1px solid var(--line); border-radius:8px; background:#f7f3ea; padding:0 10px; font-size:16px; }
+  .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+  button { height:44px; border:0; border-radius:10px; padding:0 14px; font-size:14px; font-weight:600; }
+  .accent { background:var(--up); color:#fff; }
+  .secondary { background:#ece6da; color:var(--ink); border:1px solid var(--line); }
+  .up { color:var(--up); } .down { color:var(--down); }
+  .note { color:var(--muted); font-size:12px; align-self:center; }
+</style>
 </head>
 <body>
-  <div id="gate">
-    <div class="gate-box">
-      <h2>持仓地图</h2>
-      <p>输入访问码后才能看仓位。</p>
-      <input id="gateInput" type="password" placeholder="访问码" />
-      <div class="row-actions"><button type="button" id="gateGo">进入</button></div>
-      <p id="gateErr" class="hint"></p>
-    </div>
+<main>
+  <h1>持仓地图</h1>
+  <p class="sub">改完数字点保存。现价点拉取币安。数据存在这台手机里。</p>
+  <section class="kpis" id="kpis"></section>
+  <section id="lots"></section>
+  <div class="actions">
+    <button class="accent" id="save">保存仓位</button>
+    <span class="note" id="status">点保存后刷新仍是你的数字</span>
+    <button class="accent" id="quotes">拉取币安现价</button>
   </div>
-  <div class="wrap" id="app" style="display:none">
-    <h1>持仓地图</h1>
-    <p class="sub">股数和成本自己填。点「拉取公开现价」更新股价。</p>
-    <div class="nav">
-      <button type="button" class="on" data-page="holdings">持仓</button>
-      <button type="button" data-page="watch">观察池</button>
-      <button type="button" data-page="notes">备忘</button>
-    </div>
-    <section class="page on" id="page-holdings">
-      <section class="stats" id="stats"></section>
-      <section class="card">
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>名称</th><th>代码</th><th>类型</th><th>股数</th><th>单股成本</th><th>总成本 U</th><th>现价</th><th>当前市值 U</th><th>浮盈亏</th><th>仓位%</th><th>颜色</th><th></th></tr></thead>
-            <tbody id="rows"></tbody>
-          </table>
-        </div>
-        <div class="row-actions">
-          <button type="button" id="add">加一行</button>
-          <button type="button" id="refreshPx" style="background:#0f7b4a">拉取公开现价</button>
-          <button type="button" id="reset" style="background:#445261">恢复这份仓位</button>
-          <span id="pxStatus" class="hint" style="margin:0;align-self:center"></span>
-        </div>
-      </section>
-      <section class="card">
-        <div class="map-head"><strong>持仓地图</strong><span class="sub" style="margin:0">方块面积 = 当前市值占比</span></div>
-        <div id="tree"></div>
-      </section>
-    </section>
-    <section class="page" id="page-watch"><section class="card"><textarea id="watchBox" placeholder="观察池"></textarea></section></section>
-    <section class="page" id="page-notes"><section class="card"><textarea id="notesBox" placeholder="备忘"></textarea></section></section>
-  </div>
-  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
-  <script src="./app.js"></script>
+</main>
+<script>
+const KEY = "holdings-map-phone-v1";
+const SEED = [
+  {id:"usdt",name:"现金 U",ticker:"USDT",type:"cash",shares:25970,cost:25970,price:1},
+  {id:"crcl",name:"Circle",ticker:"CRCL",type:"stock",shares:137.3,cost:10450,price:78.97},
+  {id:"rklb",name:"Rocket Lab",ticker:"RKLB",type:"stock",shares:50.3,cost:3380,price:51.415},
+  {id:"pdd",name:"拼多多",ticker:"PDD",type:"stock",shares:0,cost:0,price:82.1},
+  {id:"otc",name:"场外基金",ticker:"OTC",type:"fund",shares:0,cost:5200,price:0},
+  {id:"dram",name:"Memory ETF",ticker:"DRAM",type:"stock",shares:0,cost:0,price:47.21}
+];
+let lots = load();
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    const data = raw ? JSON.parse(raw) : null;
+    if (data && Array.isArray(data.lots) && data.lots.length) return data.lots;
+  } catch {}
+  return SEED.map(x => ({...x}));
+}
+function money(n) { return Number(n||0).toLocaleString("zh-CN", {maximumFractionDigits:2}); }
+function mv(l) {
+  if (l.type === "cash") return Number(l.shares) || Number(l.cost) || 0;
+  if (Number(l.shares) > 0 && Number(l.price) > 0) return Number(l.shares) * Number(l.price);
+  return Number(l.cost) || 0;
+}
+function totals() {
+  const value = lots.reduce((a,b)=>a+mv(b),0);
+  const cash = lots.filter(x=>x.type==="cash").reduce((a,b)=>a+mv(b),0);
+  const cost = lots.reduce((a,b)=>a+Number(b.cost||0),0);
+  const cashCost = lots.filter(x=>x.type==="cash").reduce((a,b)=>a+Number(b.cost||0),0);
+  return {value, cash, invested:value-cash, investedCost:cost-cashCost, pnl:value-cost};
+}
+function render() {
+  const t = totals();
+  document.getElementById("kpis").innerHTML = [
+    ["总市值", money(t.value)+" U"],
+    ["现金 U", money(t.cash)+" U"],
+    ["非现金仓位", money(t.invested)+" U"],
+    ["浮动盈亏", (t.pnl>=0?"+":"")+money(t.pnl)+" U"]
+  ].map(([k,v])=>`<div class="kpi"><span>${k}</span><b>${v}</b></div>`).join("");
+  document.getElementById("lots").innerHTML = lots.map((l,i) => {
+    const v = mv(l);
+    const p = v - Number(l.cost||0);
+    const cls = p>0.005?"up":p<-0.005?"down":"";
+    return `<div class="card">
+      <div class="row"><div><div class="name">${l.name}</div><div class="ticker">${l.ticker}</div></div>
+      <div class="mv ${cls}">${money(v)} U<div style="font-size:12px">${p>=0?"+":""}${money(p)}</div></div></div>
+      <div class="grid">
+        <label>股数<input data-i="${i}" data-k="shares" value="${l.shares}" inputmode="decimal"></label>
+        <label>总成本 U<input data-i="${i}" data-k="cost" value="${l.cost}" inputmode="decimal"></label>
+        <label>现价<input data-i="${i}" data-k="price" value="${l.price}" inputmode="decimal" ${l.type==="cash"?"disabled":""}></label>
+        <label>单股成本<input value="${l.shares>0?(l.cost/l.shares).toFixed(2):"—"}" disabled></label>
+      </div>
+    </div>`;
+  }).join("");
+  document.querySelectorAll("input[data-k]").forEach(el => {
+    el.addEventListener("change", () => {
+      const i = Number(el.dataset.i);
+      const k = el.dataset.k;
+      const n = Number(el.value);
+      if (!Number.isFinite(n)) return;
+      lots[i][k] = n;
+      if (lots[i].type === "cash" && (k==="shares"||k==="cost")) {
+        lots[i].shares = n; lots[i].cost = n; lots[i].price = 1;
+      }
+      render();
+    });
+  });
+}
+document.getElementById("save").onclick = () => {
+  localStorage.setItem(KEY, JSON.stringify({lots, savedAt: Date.now()}));
+  document.getElementById("status").textContent = "已保存 " + new Date().toLocaleTimeString("zh-CN",{hour:"2-digit",minute:"2-digit"});
+};
+async function priceOf(ticker) {
+  const pair = ticker.toUpperCase().endsWith("B") ? ticker.toUpperCase()+"USDT" : ticker.toUpperCase()+"BUSDT";
+  try {
+    const r = await fetch("https://data-api.binance.vision/api/v3/ticker/price?symbol="+pair);
+    const d = await r.json();
+    const n = Number(d.price);
+    if (n>0) return n;
+  } catch {}
+  return 0;
+}
+document.getElementById("quotes").onclick = async () => {
+  const btn = document.getElementById("quotes");
+  btn.textContent = "正在拉…";
+  for (const l of lots) {
+    if (l.type !== "stock" || !l.ticker) continue;
+    const p = await priceOf(l.ticker);
+    if (p) l.price = p;
+  }
+  btn.textContent = "拉取币安现价";
+  document.getElementById("status").textContent = "现价已更新，点保存才记住";
+  render();
+};
+render();
+</script>
 </body>
 </html>
