@@ -49,11 +49,11 @@
 const KEY = "holdings-map-phone-v2";
 const SEED = [
   {id:"usdt",name:"现金 U",ticker:"USDT",type:"cash",shares:25970,cost:25970,price:1},
-  {id:"crcl",name:"Circle",ticker:"CRCL",type:"stock",shares:137.3,cost:10450,price:78.97},
-  {id:"rklb",name:"Rocket Lab",ticker:"RKLB",type:"stock",shares:50.3,cost:3380,price:51.415},
-  {id:"pdd",name:"拼多多",ticker:"PDD",type:"stock",shares:0,cost:0,price:82.1},
+  {id:"crcl",name:"Circle",ticker:"CRCL",type:"stock",shares:137.3,cost:10450,price:85.9},
+  {id:"rklb",name:"Rocket Lab",ticker:"RKLB",type:"stock",shares:50.3,cost:3380,price:55.05},
+  {id:"pdd",name:"拼多多",ticker:"PDD",type:"stock",shares:0,cost:0,price:82.42},
   {id:"otc",name:"场外基金",ticker:"OTC",type:"fund",shares:0,cost:5200,price:0},
-  {id:"dram",name:"Memory ETF",ticker:"DRAM",type:"stock",shares:0,cost:0,price:47.21}
+  {id:"dram",name:"Memory ETF",ticker:"DRAM",type:"stock",shares:0,cost:0,price:48.15}
 ];
 let lots = load();
 function costOf(list) { return (list||[]).reduce((a,b)=>a+Number(b.cost||0),0); }
@@ -127,29 +127,55 @@ document.getElementById("save").onclick = () => {
   localStorage.setItem(KEY, JSON.stringify({lots, savedAt: Date.now()}));
   document.getElementById("status").textContent = "已保存 " + new Date().toLocaleTimeString("zh-CN",{hour:"2-digit",minute:"2-digit"});
 };
-async function priceOf(ticker) {
-  const pair = ticker.toUpperCase().endsWith("B") ? ticker.toUpperCase()+"USDT" : ticker.toUpperCase()+"BUSDT";
+async function onePrice(url) {
+  const ctrl = new AbortController();
+  const stop = setTimeout(() => ctrl.abort(), 4000);
   try {
-    const r = await fetch("https://data-api.binance.vision/api/v3/ticker/price?symbol="+pair);
+    const r = await fetch(url, { signal: ctrl.signal });
+    if (!r.ok) return 0;
     const d = await r.json();
-    const n = Number(d.price);
-    if (n>0) return n;
-  } catch {}
-  return 0;
-}
-document.getElementById("quotes").onclick = async () => {
-  const btn = document.getElementById("quotes");
-  btn.textContent = "正在拉…";
-  for (const l of lots) {
-    if (l.type !== "stock" || !l.ticker) continue;
-    const p = await priceOf(l.ticker);
-    if (p) l.price = p;
+    const n = Number(d.price || d.data?.bp || d.data?.ap || 0);
+    return n > 0 ? n : 0;
+  } catch {
+    return 0;
+  } finally {
+    clearTimeout(stop);
   }
-  btn.textContent = "拉取币安现价";
-  document.getElementById("status").textContent = "现价已更新，点保存才记住";
-  render();
-};
+}
+async function priceOf(ticker) {
+  const t = ticker.toUpperCase().replace(/USDT$/, "");
+  const pair = t.endsWith("B") ? t + "USDT" : t + "BUSDT";
+  const spot = await onePrice("https://data-api.binance.vision/api/v3/ticker/price?symbol=" + pair);
+  if (spot) return spot;
+  const eq = await onePrice("https://www.binance.com/bapi/equity/v1/public/equity/market/get-latest-quote?symbol=" + t);
+  return eq;
+}
+let pulling = false;
+async function refreshQuotes() {
+  if (pulling) return;
+  pulling = true;
+  const btn = document.getElementById("quotes");
+  const status = document.getElementById("status");
+  btn.textContent = "正在拉…";
+  try {
+    const stocks = lots.filter(l => l.type === "stock" && l.ticker);
+    const prices = await Promise.all(stocks.map(l => priceOf(l.ticker)));
+    let n = 0;
+    stocks.forEach((l, i) => { if (prices[i]) { l.price = prices[i]; n++; } });
+    const now = new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
+    status.textContent = n ? "币安现价 " + now + "，点保存才记住" : "没拉到币安价，还是上次价格";
+    if (n) localStorage.setItem(KEY, JSON.stringify({ lots, savedAt: Date.now() }));
+  } catch {
+    status.textContent = "拉价失败，还是上次价格";
+  } finally {
+    btn.textContent = "拉取币安现价";
+    pulling = false;
+    render();
+  }
+}
+document.getElementById("quotes").onclick = refreshQuotes;
 render();
+refreshQuotes();
 </script>
 </body>
 </html>
