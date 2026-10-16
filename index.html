@@ -76,7 +76,7 @@ function totals() {
   const cash = lots.filter(x=>x.type==="cash").reduce((a,b)=>a+mv(b),0);
   const cost = lots.reduce((a,b)=>a+Number(b.cost||0),0);
   const cashCost = lots.filter(x=>x.type==="cash").reduce((a,b)=>a+Number(b.cost||0),0);
-  return {value, cash, invested:value-cash, investedCost:cost-cashCost, pnl:value-cost};
+  return {value, cash, cost, invested:value-cash, investedCost:cost-cashCost, pnl:value-cost};
 }
 function pct(n) { return (n>=0?"+":"") + n.toFixed(2) + "%"; }
 function share(part, whole) { return whole ? (part / whole * 100).toFixed(1) + "%" : "0%"; }
