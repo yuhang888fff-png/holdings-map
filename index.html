@@ -46,7 +46,7 @@
   </div>
 </main>
 <script>
-const KEY = "holdings-map-phone-v1";
+const KEY = "holdings-map-phone-v2";
 const SEED = [
   {id:"usdt",name:"现金 U",ticker:"USDT",type:"cash",shares:25970,cost:25970,price:1},
   {id:"crcl",name:"Circle",ticker:"CRCL",type:"stock",shares:137.3,cost:10450,price:78.97},
@@ -56,11 +56,12 @@ const SEED = [
   {id:"dram",name:"Memory ETF",ticker:"DRAM",type:"stock",shares:0,cost:0,price:47.21}
 ];
 let lots = load();
+function costOf(list) { return (list||[]).reduce((a,b)=>a+Number(b.cost||0),0); }
 function load() {
   try {
     const raw = localStorage.getItem(KEY);
     const data = raw ? JSON.parse(raw) : null;
-    if (data && Array.isArray(data.lots) && data.lots.length) return data.lots;
+    if (data && Array.isArray(data.lots) && data.lots.length && costOf(data.lots) > 0) return data.lots;
   } catch {}
   return SEED.map(x => ({...x}));
 }
@@ -110,7 +111,9 @@ function render() {
     el.addEventListener("change", () => {
       const i = Number(el.dataset.i);
       const k = el.dataset.k;
-      const n = Number(el.value);
+      const raw = String(el.value).trim();
+      if (!raw || raw === "." || raw === "-") return;
+      const n = Number(raw);
       if (!Number.isFinite(n)) return;
       lots[i][k] = n;
       if (lots[i].type === "cash" && (k==="shares"||k==="cost")) {
