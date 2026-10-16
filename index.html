@@ -36,12 +36,13 @@
 <body>
 <main>
   <h1>持仓地图</h1>
-  <p class="sub">改完数字点保存。现价点拉取币安。数据存在这台手机里。</p>
+  <p class="sub">改完可以先看数据。不保存就点「刷新」，会回到上次保存的仓位。</p>
   <section class="kpis" id="kpis"></section>
   <section id="lots"></section>
   <div class="actions">
     <button class="accent" id="save">保存仓位</button>
-    <span class="note" id="status">点保存后刷新仍是你的数字</span>
+    <button class="secondary" id="reload">刷新</button>
+    <span class="note" id="status">没保存的改动，点刷新会还原</span>
     <button class="accent" id="quotes">拉取币安现价</button>
   </div>
 </main>
@@ -127,6 +128,11 @@ document.getElementById("save").onclick = () => {
   localStorage.setItem(KEY, JSON.stringify({lots, savedAt: Date.now()}));
   document.getElementById("status").textContent = "已保存 " + new Date().toLocaleTimeString("zh-CN",{hour:"2-digit",minute:"2-digit"});
 };
+document.getElementById("reload").onclick = () => {
+  lots = load();
+  render();
+  document.getElementById("status").textContent = "已还原上次保存的仓位";
+};
 async function onePrice(url) {
   const ctrl = new AbortController();
   const stop = setTimeout(() => ctrl.abort(), 4000);
@@ -164,7 +170,6 @@ async function refreshQuotes() {
     stocks.forEach((l, i) => { if (prices[i]) { l.price = prices[i]; n++; } });
     const now = new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
     status.textContent = n ? "币安现价 " + now + "，点保存才记住" : "没拉到币安价，还是上次价格";
-    if (n) localStorage.setItem(KEY, JSON.stringify({ lots, savedAt: Date.now() }));
   } catch {
     status.textContent = "拉价失败，还是上次价格";
   } finally {
