@@ -1,1 +1,332 @@
-LOADING
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>持仓地图</title>
+<style>
+  :root { --paper:#f3efe6; --card:#fffcf7; --ink:#1c1917; --muted:#6f6a63; --line:#e4ddd1; --up:#1f7a4d; --down:#b42318; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:"PingFang SC","Noto Sans SC",sans-serif; }
+  main { max-width:720px; margin:0 auto; padding:16px 12px 40px; }
+  h1 { font-size:28px; margin:0 0 4px; font-weight:500; }
+  p.sub { color:var(--muted); font-size:13px; margin:0 0 14px; }
+  .kpis { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; }
+  .kpi { background:var(--card); border-radius:16px; padding:12px 14px; box-shadow:0 8px 20px rgb(28 25 23 / .05); }
+  .kpi b { display:block; font-size:18px; margin-top:2px; }
+  .kpi small { display:block; margin-top:2px; color:var(--muted); font-size:12px; font-weight:400; }
+  .kpi.wide { grid-column: 1 / -1; }
+  .kpi.up b, .kpi.up small { color:var(--up); }
+  .kpi.down b, .kpi.down small { color:var(--down); }
+  .card { background:var(--card); border-radius:16px; padding:12px; margin-bottom:10px; box-shadow:0 8px 20px rgb(28 25 23 / .05); }
+  .row { display:flex; justify-content:space-between; gap:8px; }
+  .name { font-weight:600; }
+  .ticker { color:var(--muted); font-size:12px; }
+  .mv { text-align:right; font-variant-numeric:tabular-nums; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+  label { font-size:12px; color:var(--muted); display:block; }
+  input { width:100%; margin-top:4px; height:40px; border:1px solid var(--line); border-radius:8px; background:#f7f3ea; padding:0 10px; font-size:16px; }
+  .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+  button { height:44px; border:0; border-radius:10px; padding:0 14px; font-size:14px; font-weight:600; }
+  .accent { background:var(--up); color:#fff; }
+  .secondary { background:#ece6da; color:var(--ink); border:1px solid var(--line); }
+  .up { color:var(--up); } .down { color:var(--down); }
+  .note { color:var(--muted); font-size:12px; align-self:center; }
+  .chart-card { background:var(--card); border-radius:16px; padding:14px 10px 10px; margin:0 0 14px; box-shadow:0 8px 20px rgb(28 25 23 / .05); }
+  .chart-high { text-align:center; color:#9a9388; font-size:15px; margin-bottom:4px; }
+  .chart-low { color:#9a9388; font-size:15px; margin:2px 0 8px 8px; }
+  #chart { width:100%; height:150px; display:block; }
+  .ranges { display:flex; justify-content:space-around; align-items:center; }
+  .ranges button { height:32px; border:0; background:transparent; color:#9a9388; font-weight:500; border-radius:16px; padding:0 12px; }
+  .ranges button.on { background:#fff; color:var(--ink); box-shadow:0 2px 8px rgb(28 25 23 / .08); }
+  .chart-note { color:var(--muted); font-size:11px; text-align:center; margin-top:6px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>持仓地图</h1>
+  <p class="sub">改完可以先看数据。不保存就点「刷新」，会回到上次保存的仓位。</p>
+  <section class="chart-card">
+    <div class="chart-high" id="chartHigh">—</div>
+    <svg id="chart" viewBox="0 0 360 150" preserveAspectRatio="none"></svg>
+    <div class="chart-low" id="chartLow"></div>
+    <div class="ranges" id="ranges"></div>
+    <div class="chart-note" id="chartNote"></div>
+  </section>
+  <section class="kpis" id="kpis"></section>
+  <section id="lots"></section>
+  <div class="actions">
+    <button class="accent" id="save">保存仓位</button>
+    <button class="secondary" id="reload">刷新</button>
+    <span class="note" id="status">没保存的改动，点刷新会还原</span>
+    <button class="accent" id="quotes">拉取币安现价</button>
+  </div>
+</main>
+<script>
+const KEY = "holdings-map-phone-v2";
+const SEED = [
+  {id:"usdt",name:"现金 U",ticker:"USDT",type:"cash",shares:25970,cost:25970,price:1},
+  {id:"crcl",name:"Circle",ticker:"CRCL",type:"stock",shares:137.3,cost:10450,price:85.9},
+  {id:"rklb",name:"Rocket Lab",ticker:"RKLB",type:"stock",shares:50.3,cost:3380,price:55.05},
+  {id:"pdd",name:"拼多多",ticker:"PDD",type:"stock",shares:0,cost:0,price:82.42},
+  {id:"otc",name:"场外基金",ticker:"OTC",type:"fund",shares:0,cost:5200,price:0},
+  {id:"dram",name:"Memory ETF",ticker:"DRAM",type:"stock",shares:0,cost:0,price:48.15}
+];
+let lots = load();
+function costOf(list) { return (list||[]).reduce((a,b)=>a+Number(b.cost||0),0); }
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    const data = raw ? JSON.parse(raw) : null;
+    if (data && Array.isArray(data.lots) && data.lots.length && costOf(data.lots) > 0) return data.lots;
+  } catch {}
+  return SEED.map(x => ({...x}));
+}
+function money(n) { return Number(n||0).toLocaleString("zh-CN", {maximumFractionDigits:2}); }
+function mv(l) {
+  if (l.type === "cash") return Number(l.shares) || Number(l.cost) || 0;
+  if (Number(l.shares) > 0 && Number(l.price) > 0) return Number(l.shares) * Number(l.price);
+  return Number(l.cost) || 0;
+}
+function totals() {
+  const value = lots.reduce((a,b)=>a+mv(b),0);
+  const cash = lots.filter(x=>x.type==="cash").reduce((a,b)=>a+mv(b),0);
+  const cost = lots.reduce((a,b)=>a+Number(b.cost||0),0);
+  const cashCost = lots.filter(x=>x.type==="cash").reduce((a,b)=>a+Number(b.cost||0),0);
+  return {value, cash, cost, invested:value-cash, investedCost:cost-cashCost, pnl:value-cost, today:todayPnl()};
+}
+function todayPnl() {
+  return lots.reduce((a, l) => {
+    if (l.type !== "stock" || !(Number(l.shares) > 0) || !(Number(l.prev) > 0) || !(Number(l.price) > 0)) return a;
+    return a + Number(l.shares) * (Number(l.price) - Number(l.prev));
+  }, 0);
+}
+function todayBase() {
+  return lots.reduce((a, l) => {
+    if (l.type !== "stock" || !(Number(l.shares) > 0) || !(Number(l.prev) > 0)) return a;
+    return a + Number(l.shares) * Number(l.prev);
+  }, 0);
+}
+function pct(n) { return (n>=0?"+":"") + n.toFixed(2) + "%"; }
+function share(part, whole) { return whole ? (part / whole * 100).toFixed(1) + "%" : "0%"; }
+function render() {
+  const t = totals();
+  const up = t.pnl >= 0;
+  const day = t.today;
+  const dayUp = day >= 0;
+  const cards = [
+    ["总市值", money(t.value)+" U", "按现价", ""],
+    ["现金 U", money(t.cash)+" U", share(t.cash, t.value), ""],
+    ["非现金仓位", money(t.invested)+" U", share(t.invested, t.value), ""],
+    ["非现金仓位成本", money(t.investedCost)+" U", "股票和基金本金", ""],
+    ["总成本", money(t.cost)+" U", "含现金", "wide"],
+    ["浮动盈亏", (up?"+":"")+money(t.pnl)+" U", t.investedCost ? pct(t.pnl / t.investedCost * 100) : "—", up?"up":"down"],
+    ["今日盈亏", (dayUp?"+":"")+money(day)+" U", todayBase() ? pct(day / todayBase() * 100) : "拉现价后显示", dayUp?"up":"down"],
+  ];
+  document.getElementById("kpis").innerHTML = cards.map(([k,v,s,tone])=>`<div class="kpi ${tone}"><span>${k}</span><b>${v}</b><small>${s}</small></div>`).join("");
+  document.getElementById("lots").innerHTML = lots.map((l,i) => {
+    const v = mv(l);
+    const p = v - Number(l.cost||0);
+    const cls = p>0.005?"up":p<-0.005?"down":"";
+      const day = (l.type==="stock" && Number(l.shares)>0 && Number(l.prev)>0 && Number(l.price)>0) ? Number(l.shares)*(Number(l.price)-Number(l.prev)) : null;
+      const dayTxt = day==null ? "" : `<div style="font-size:12px">${day>=0?"+":""}${money(day)} 今日</div>`;
+      return `<div class="card">
+      <div class="row"><div><div class="name">${l.name}</div><div class="ticker">${l.ticker}</div></div>
+      <div class="mv ${cls}">${money(v)} U<div style="font-size:12px">${p>=0?"+":""}${money(p)}</div>${dayTxt}</div></div>
+      <div class="grid">
+        <label>股数<input data-i="${i}" data-k="shares" value="${l.shares}" inputmode="decimal"></label>
+        <label>总成本 U<input data-i="${i}" data-k="cost" value="${l.cost}" inputmode="decimal"></label>
+        <label>现价<input data-i="${i}" data-k="price" value="${l.price}" inputmode="decimal" ${l.type==="cash"?"disabled":""}></label>
+        <label>单股成本<input value="${l.shares>0?(l.cost/l.shares).toFixed(2):"—"}" disabled></label>
+      </div>
+    </div>`;
+  }).join("");
+  document.querySelectorAll("input[data-k]").forEach(el => {
+    el.addEventListener("change", () => {
+      const i = Number(el.dataset.i);
+      const k = el.dataset.k;
+      const raw = String(el.value).trim();
+      if (!raw || raw === "." || raw === "-") return;
+      const n = Number(raw);
+      if (!Number.isFinite(n)) return;
+      lots[i][k] = n;
+      if (lots[i].type === "cash" && (k==="shares"||k==="cost")) {
+        lots[i].shares = n; lots[i].cost = n; lots[i].price = 1;
+      }
+      render();
+    });
+  });
+}
+document.getElementById("save").onclick = () => {
+  localStorage.setItem(KEY, JSON.stringify({lots, savedAt: Date.now()}));
+  document.getElementById("status").textContent = "已保存 " + new Date().toLocaleTimeString("zh-CN",{hour:"2-digit",minute:"2-digit"});
+};
+document.getElementById("reload").onclick = () => {
+  lots = load();
+  render();
+  drawChart();
+  document.getElementById("status").textContent = "已还原上次保存的仓位";
+};
+async function onePrice(url) {
+  const ctrl = new AbortController();
+  const stop = setTimeout(() => ctrl.abort(), 4000);
+  try {
+    const r = await fetch(url, { signal: ctrl.signal });
+    if (!r.ok) return 0;
+    const d = await r.json();
+    const n = Number(d.price || d.data?.bp || d.data?.ap || 0);
+    return n > 0 ? n : 0;
+  } catch {
+    return 0;
+  } finally {
+    clearTimeout(stop);
+  }
+}
+async function quoteOf(ticker) {
+  const t = ticker.toUpperCase().replace(/USDT$/, "");
+  const pair = t.endsWith("B") ? t + "USDT" : t + "BUSDT";
+  const ctrl = new AbortController();
+  const stop = setTimeout(() => ctrl.abort(), 5000);
+  try {
+    const r = await fetch("https://data-api.binance.vision/api/v3/ticker/24hr?symbol=" + pair, { signal: ctrl.signal });
+    if (r.ok) {
+      const d = await r.json();
+      const price = Number(d.lastPrice || d.price || 0);
+      const prev = Number(d.prevClosePrice || d.openPrice || 0);
+      if (price > 0) return { price, prev };
+    }
+  } catch {}
+  finally { clearTimeout(stop); }
+  const price = await onePrice("https://www.binance.com/bapi/equity/v1/public/equity/market/get-latest-quote?symbol=" + t);
+  return { price, prev: 0 };
+}
+let pulling = false;
+async function refreshQuotes() {
+  if (pulling) return;
+  pulling = true;
+  const btn = document.getElementById("quotes");
+  const status = document.getElementById("status");
+  btn.textContent = "正在拉…";
+  try {
+    const stocks = lots.filter(l => l.type === "stock" && l.ticker);
+    const quotes = await Promise.all(stocks.map(l => quoteOf(l.ticker)));
+    let n = 0;
+    stocks.forEach((l, i) => {
+      if (quotes[i].price) { l.price = quotes[i].price; n++; }
+      if (quotes[i].prev) l.prev = quotes[i].prev;
+    });
+    const now = new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
+    status.textContent = n ? "币安现价 " + now + "，点保存才记住" : "没拉到币安价，还是上次价格";
+  } catch {
+    status.textContent = "拉价失败，还是上次价格";
+  } finally {
+    btn.textContent = "拉取币安现价";
+    pulling = false;
+    render();
+    drawChart();
+  }
+}
+document.getElementById("quotes").onclick = refreshQuotes;
+const RANGES = [
+  {id:"1d", label:"1天", interval:"1h", limit:24},
+  {id:"7d", label:"7天", interval:"1h", limit:168},
+  {id:"30d", label:"30天", interval:"1d", limit:30},
+  {id:"180d", label:"180天", interval:"1d", limit:180},
+  {id:"360d", label:"360天", interval:"1d", limit:365}
+];
+let range = "30d";
+let chartGen = 0;
+document.getElementById("ranges").innerHTML = RANGES.map(r => `<button data-r="${r.id}" class="${r.id===range?"on":""}">${r.label}</button>`).join("");
+document.getElementById("ranges").onclick = (e) => {
+  const id = e.target.dataset.r;
+  if (!id) return;
+  range = id;
+  document.querySelectorAll("#ranges button").forEach(b => b.classList.toggle("on", b.dataset.r === id));
+  drawChart();
+};
+async function klines(ticker, interval, limit) {
+  const t = ticker.toUpperCase().replace(/USDT$/, "");
+  const pair = t.endsWith("B") ? t + "USDT" : t + "BUSDT";
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const ctrl = new AbortController();
+    const stop = setTimeout(() => ctrl.abort(), 8000);
+    try {
+      const r = await fetch("https://data-api.binance.vision/api/v3/klines?symbol=" + pair + "&interval=" + interval + "&limit=" + limit, { signal: ctrl.signal });
+      if (r.ok) {
+        const d = await r.json();
+        const out = d.map(x => [x[0], Number(x[4])]).filter(x => x[1] > 0);
+        if (out.length) return out;
+      }
+    } catch {}
+    finally { clearTimeout(stop); }
+  }
+  return [];
+}
+function paint(values) {
+  const svg = document.getElementById("chart");
+  if (!values.length) {
+    document.getElementById("chartHigh").textContent = "没拉到历史";
+    document.getElementById("chartLow").textContent = "";
+    svg.innerHTML = "";
+    return;
+  }
+  const hi = Math.max(...values);
+  const lo = Math.min(...values);
+  document.getElementById("chartHigh").textContent = "$" + money(hi);
+  document.getElementById("chartLow").textContent = "$" + money(lo);
+  const w = 360, h = 150, pad = 6;
+  const span = hi - lo || 1;
+  const pts = values.map((v, i) => {
+    const x = values.length === 1 ? w / 2 : pad + i * (w - pad * 2) / (values.length - 1);
+    const y = pad + (hi - v) / span * (h - pad * 2);
+    return [x, y];
+  });
+  const line = pts.map(p => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" ");
+  const area = `0,${h} ` + line + ` ${w},${h}`;
+  svg.innerHTML = `<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#e6b325" stop-opacity=".45"/><stop offset="100%" stop-color="#e6b325" stop-opacity=".04"/></linearGradient></defs><polygon points="${area}" fill="url(#g)"/><polyline points="${line}" fill="none" stroke="#e6b325" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>`;
+}
+async function drawChart() {
+  const gen = ++chartGen;
+  const spec = RANGES.find(r => r.id === range);
+  const stocks = lots.filter(l => l.type === "stock" && Number(l.shares) > 0 && l.ticker);
+  const cash = lots.filter(l => l.type === "cash").reduce((a,b)=>a+mv(b),0);
+  const fixed = lots.filter(l => l.type !== "stock" && l.type !== "cash").reduce((a,b)=>a+mv(b),0);
+  const nowValue = lots.reduce((a,b)=>a+mv(b),0);
+  try {
+    if (!stocks.length) { paint([cash + fixed]); document.getElementById("chartNote").textContent = ""; return; }
+    const series = await Promise.all(stocks.map(l => klines(l.ticker, spec.interval, spec.limit)));
+    const missing = stocks.filter((l, i) => !series[i].length).map(l => l.ticker);
+    const filled = series.map((s, i) => s.length ? s : [[0, Number(stocks[i].price) || 0]]);
+    const times = [...new Set(filled.flat().map(x => x[0]).filter(t => t > 0))].sort((a,b)=>a-b);
+    if (!times.length) { paint([]); return; }
+    const maps = filled.map(s => new Map(s.filter(x => x[0] > 0)));
+    const last = stocks.map((l, i) => series[i].length ? 0 : (Number(l.price) || 0));
+    const values = [];
+    for (const t of times) {
+      let ready = true;
+      const px = last.slice();
+      stocks.forEach((l, i) => {
+        if (maps[i].has(t)) px[i] = maps[i].get(t);
+        if (!(px[i] > 0)) ready = false;
+      });
+      if (!ready) continue;
+      last.splice(0, last.length, ...px);
+      let v = cash + fixed;
+      stocks.forEach((l, i) => { v += Number(l.shares) * px[i]; });
+      values.push(v);
+    }
+    if (gen !== chartGen) return;
+    if (values.length) values[values.length - 1] = nowValue;
+    paint(values);
+    const note = "按当前股数 × 币安历史价，含现金和基金" + (missing.length ? "。缺历史已用现价补：" + missing.join(" ") : "");
+    document.getElementById("chartNote").textContent = note;
+  } catch {
+    if (gen === chartGen) paint([]);
+  }
+}
+render();
+refreshQuotes();
+drawChart();
+</script>
+</body>
+</html>
