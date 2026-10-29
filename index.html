@@ -7,52 +7,52 @@
 <title>持仓地图</title>
 <style>
   :root {
-    --paper:#0b0e11; --card:#1e2329; --ink:#eaecef; --muted:#848e9c;
-    --line:#2b3139; --up:#0ecb81; --down:#f6465d; --gold:#f0b90b;
+    --paper:#f7f5f0; --card:#fff; --ink:#1e2329; --muted:#6f7680;
+    --line:#e8e4dc; --up:#0ecb81; --down:#f6465d; --gold:#f0b90b;
   }
   * { box-sizing: border-box; }
   body { margin:0; background:var(--paper); color:var(--ink); font-family:-apple-system,"PingFang SC","Noto Sans SC",sans-serif; -webkit-font-smoothing:antialiased; }
   main { max-width:680px; margin:0 auto; padding:20px 14px 48px; }
-  h1 { font-size:26px; margin:0 0 2px; font-weight:600; letter-spacing:-.3px; color:var(--gold); }
+  h1 { font-size:26px; margin:0 0 2px; font-weight:600; letter-spacing:-.3px; color:#c99a08; }
   p.sub { color:var(--muted); font-size:12.5px; margin:0 0 16px; }
   .kpis { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
   .kpi { background:var(--card); border-radius:18px; padding:14px 16px; border:1px solid var(--line); }
   .kpi span { font-size:12px; color:var(--muted); letter-spacing:.2px; }
-  .kpi b { display:block; font-size:20px; margin-top:4px; font-weight:600; font-variant-numeric:tabular-nums; letter-spacing:-.3px; color:var(--gold); }
+  .kpi b { display:block; font-size:20px; margin-top:4px; font-weight:600; font-variant-numeric:tabular-nums; letter-spacing:-.3px; color:#1e2329; }
   .kpi small { display:block; margin-top:3px; color:var(--muted); font-size:12px; }
   .kpi.wide { grid-column: 1 / -1; }
-  .kpi.up b, .kpi.up small { color:var(--up); }
+  .kpi.up b, .kpi.up small { color:#0a9d62; }
   .kpi.down b, .kpi.down small { color:var(--down); }
   .card { background:var(--card); border-radius:18px; padding:14px; margin-bottom:10px; border:1px solid var(--line); }
   .row { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
   .name { font-weight:600; font-size:16px; }
   .name.click:active { opacity:.6; }
   .ticker { color:var(--muted); font-size:11px; margin-top:1px; letter-spacing:.4px; }
-  .del { border:1px solid #5c2b33; background:transparent; color:var(--down); font-size:12px; height:26px; padding:0 8px; border-radius:7px; margin-top:6px; }
+  .del { border:1px solid #f5d0d4; background:#fff; color:var(--down); font-size:12px; height:26px; padding:0 8px; border-radius:7px; margin-top:6px; }
   .fold { color:var(--muted); font-size:13px; margin:4px 4px 14px; padding:8px 0; }
   .mv { text-align:right; font-variant-numeric:tabular-nums; font-weight:600; font-size:16px; }
   .mv div { font-weight:400; }
   .grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
   label { font-size:11px; color:var(--muted); display:block; letter-spacing:.2px; }
-  input { width:100%; margin-top:4px; height:38px; border:1px solid var(--line); border-radius:10px; background:#181a20; padding:0 12px; font-size:15px; color:var(--ink); }
-  input:focus { outline:none; border-color:var(--gold); background:#181a20; }
-  input:disabled { color:#5e6673; }
+  input { width:100%; margin-top:4px; height:38px; border:1px solid var(--line); border-radius:10px; background:#faf8f4; padding:0 12px; font-size:15px; color:var(--ink); }
+  input:focus { outline:none; border-color:var(--gold); background:#fff; }
+  input:disabled { color:#b0b4ba; }
   .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
   button { height:40px; border:0; border-radius:10px; padding:0 14px; font-size:13.5px; font-weight:600; }
-  .accent { background:var(--gold); color:#181a20; }
-  .secondary { background:#2b3139; color:var(--ink); border:1px solid var(--line); }
-  .up { color:var(--up); } .down { color:var(--down); }
+  .accent { background:var(--gold); color:#1e2329; }
+  .secondary { background:#fff; color:var(--ink); border:1px solid var(--line); }
+  .up { color:#0a9d62; } .down { color:var(--down); }
   .note { color:var(--muted); font-size:12px; align-self:center; flex:1; min-width:140px; }
   .chart-card { background:var(--card); border-radius:18px; padding:16px 12px 12px; margin:0 0 14px; border:1px solid var(--line); }
-  .chart-high { text-align:center; color:#5e6673; font-size:13px; margin-bottom:2px; font-variant-numeric:tabular-nums; }
-  .chart-low { color:#5e6673; font-size:13px; margin:0 0 10px 10px; font-variant-numeric:tabular-nums; }
+  .chart-high { text-align:center; color:#b0b4ba; font-size:13px; margin-bottom:2px; font-variant-numeric:tabular-nums; }
+  .chart-low { color:#b0b4ba; font-size:13px; margin:0 0 10px 10px; font-variant-numeric:tabular-nums; }
   #chart { width:100%; height:160px; display:block; }
   .ranges { display:flex; justify-content:space-around; align-items:center; margin-top:2px; }
-  .ranges button { height:30px; border:0; background:transparent; color:#5e6673; font-weight:500; border-radius:15px; padding:0 12px; font-size:13px; }
-  .ranges button.on { background:#2b3139; color:var(--gold); }
-  .chart-note { color:#5e6673; font-size:11px; text-align:center; margin-top:8px; line-height:1.4; }
+  .ranges button { height:30px; border:0; background:transparent; color:#b0b4ba; font-weight:500; border-radius:15px; padding:0 12px; font-size:13px; }
+  .ranges button.on { background:#f7f5f0; color:#c99a08; }
+  .chart-note { color:#b0b4ba; font-size:11px; text-align:center; margin-top:8px; line-height:1.4; }
   .chart-wrap { position:relative; }
-  .tip { position:absolute; display:none; pointer-events:none; background:#181a20; color:#fff; border:1px solid var(--line); border-radius:8px; padding:5px 8px; font-size:12px; line-height:1.35; z-index:2; white-space:nowrap; }
+  .tip { position:absolute; display:none; pointer-events:none; background:#1e2329; color:#fff; border-radius:8px; padding:5px 8px; font-size:12px; line-height:1.35; z-index:2; white-space:nowrap; }
   .tip b { display:block; font-size:13px; font-weight:600; color:var(--gold); }
 </style>
 </head>
@@ -85,17 +85,19 @@
   </div>
 </main>
 <script>
-const KEY = "holdings-map-phone-v3";
+const KEY = "holdings-map-phone-v4";
 const SEED = [
-  {id:"usdt",name:"现金 U",ticker:"USDT",type:"cash",shares:24970,cost:24970,price:1},
-  {id:"crcl",name:"Circle",ticker:"CRCL",type:"stock",shares:150,cost:11550,price:85.5},
-  {id:"rklb",name:"Rocket Lab",ticker:"RKLB",type:"stock",shares:48.9,cost:3280,price:51.45},
-  {id:"otc",name:"场外基金",ticker:"OTC",type:"fund",shares:0,cost:5200,price:0}
+  {id:"usdt",name:"现金 U",ticker:"USDT",type:"cash",shares:22250,cost:22250,price:1},
+  {id:"crcl",name:"Circle",ticker:"CRCL",type:"stock",shares:150,cost:11550,price:79.84,prev:80.14},
+  {id:"rklb",name:"Rocket Lab",ticker:"RKLB",type:"stock",shares:57.7,cost:3750,price:60.01},
+  {id:"otc",name:"场外基金",ticker:"OTC",type:"fund",shares:0,cost:5200,price:0},
+  {id:"spcx",name:"SpaceX",ticker:"SPCX",type:"stock",shares:10.15,cost:1500,price:144.09,prev:144.13},
+  {id:"goog",name:"谷歌",ticker:"GOOG",type:"stock",shares:2.547,cost:750,price:282.71}
 ];
 let lots = load();
 let showEmpty = false;
 let focus = "";
-const NAMES = {CRCL:"Circle",RKLB:"Rocket Lab",PDD:"拼多多",DRAM:"Memory ETF",NVDA:"英伟达",TSLA:"特斯拉",AAPL:"苹果",ASTS:"AST SpaceMobile",QQQ:"纳指ETF"};
+const NAMES = {CRCL:"Circle",RKLB:"Rocket Lab",PDD:"拼多多",DRAM:"Memory ETF",NVDA:"英伟达",TSLA:"特斯拉",AAPL:"苹果",ASTS:"AST SpaceMobile",QQQ:"纳指ETF",SPCX:"SpaceX",GOOG:"谷歌"};
 const SNAP = "holdings-map-snaps";
 function isEmpty(l) { return l.type !== "cash" && !(Number(l.shares) > 0) && !(Number(l.cost) > 0); }
 function costOf(list) { return (list||[]).reduce((a,b)=>a+Number(b.cost||0),0); }
