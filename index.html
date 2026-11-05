@@ -9,16 +9,30 @@
   :root {
     --paper:#f7f5f0; --card:#fff; --ink:#1e2329; --muted:#6f7680;
     --line:#e8e4dc; --up:#0ecb81; --down:#f6465d; --gold:#f0b90b;
+    --donut-bg:#f0eee9;
+  }
+  body.dark {
+    --paper:#0e1116; --card:#181c23; --ink:#e8eaed; --muted:#9aa0a6;
+    --line:#2a3038; --up:#0ecb81; --down:#f6465d; --gold:#f0b90b;
+    --donut-bg:#222830;
   }
   * { box-sizing: border-box; }
-  body { margin:0; background:var(--paper); color:var(--ink); font-family:-apple-system,"PingFang SC","Noto Sans SC",sans-serif; -webkit-font-smoothing:antialiased; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:-apple-system,"PingFang SC","Noto Sans SC",sans-serif; -webkit-font-smoothing:antialiased; transition:background .2s,color .2s; }
   main { max-width:680px; margin:0 auto; padding:20px 14px 48px; }
+  @media (min-width:900px) {
+    main { max-width:1040px; }
+    .top-grid { display:grid; grid-template-columns:1.4fr 1fr; gap:14px; margin-bottom:14px; }
+    .kpis { grid-template-columns:1fr 1fr; }
+  }
+  header { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:4px; }
   h1 { font-size:26px; margin:0 0 2px; font-weight:600; letter-spacing:-.3px; color:#c99a08; }
-  p.sub { color:var(--muted); font-size:12.5px; margin:0 0 16px; }
+  p.sub { color:var(--muted); font-size:12.5px; margin:0 0 14px; }
+  .meta { color:var(--muted); font-size:11.5px; margin-top:2px; }
+  .theme-btn { height:32px; border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:8px; padding:0 10px; font-size:12px; cursor:pointer; }
   .kpis { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
   .kpi { background:var(--card); border-radius:18px; padding:14px 16px; border:1px solid var(--line); }
   .kpi span { font-size:12px; color:var(--muted); letter-spacing:.2px; }
-  .kpi b { display:block; font-size:20px; margin-top:4px; font-weight:600; font-variant-numeric:tabular-nums; letter-spacing:-.3px; color:#1e2329; }
+  .kpi b { display:block; font-size:20px; margin-top:4px; font-weight:600; font-variant-numeric:tabular-nums; letter-spacing:-.3px; color:var(--ink); }
   .kpi small { display:block; margin-top:3px; color:var(--muted); font-size:12px; }
   .kpi.wide { grid-column: 1 / -1; }
   .kpi.up b, .kpi.up small { color:#0a9d62; }
@@ -28,19 +42,18 @@
   .name { font-weight:600; font-size:16px; }
   .name.click:active { opacity:.6; }
   .ticker { color:var(--muted); font-size:11px; margin-top:1px; letter-spacing:.4px; }
-  .del { border:1px solid #f5d0d4; background:#fff; color:var(--down); font-size:12px; height:26px; padding:0 8px; border-radius:7px; margin-top:6px; }
-  .fold { color:var(--muted); font-size:13px; margin:4px 4px 14px; padding:8px 0; }
+  .del { border:1px solid #f5d0d4; background:var(--card); color:var(--down); font-size:12px; height:26px; padding:0 8px; border-radius:7px; margin-top:6px; }
+  .fold { color:var(--muted); font-size:13px; margin:4px 4px 14px; padding:8px 0; cursor:pointer; }
   .mv { text-align:right; font-variant-numeric:tabular-nums; font-weight:600; font-size:16px; }
   .mv div { font-weight:400; }
   .grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
   label { font-size:11px; color:var(--muted); display:block; letter-spacing:.2px; }
-  input { width:100%; margin-top:4px; height:38px; border:1px solid var(--line); border-radius:10px; background:#faf8f4; padding:0 12px; font-size:15px; color:var(--ink); }
-  input:focus { outline:none; border-color:var(--gold); background:#fff; }
-  input:disabled { color:#b0b4ba; }
+  input { width:100%; margin-top:4px; height:38px; border:1px solid var(--line); border-radius:10px; padding:0 10px; background:var(--paper); color:var(--ink); font-size:14px; font-variant-numeric:tabular-nums; }
+  input:disabled { opacity:.7; }
   .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
-  button { height:40px; border:0; border-radius:10px; padding:0 14px; font-size:13.5px; font-weight:600; }
+  button { height:40px; border:0; border-radius:10px; padding:0 14px; font-size:13.5px; font-weight:600; cursor:pointer; }
   .accent { background:var(--gold); color:#1e2329; }
-  .secondary { background:#fff; color:var(--ink); border:1px solid var(--line); }
+  .secondary { background:var(--card); color:var(--ink); border:1px solid var(--line); }
   .up { color:#0a9d62; } .down { color:var(--down); }
   .note { color:var(--muted); font-size:12px; align-self:center; flex:1; min-width:140px; }
   .chart-card { background:var(--card); border-radius:18px; padding:16px 12px 12px; margin:0 0 14px; border:1px solid var(--line); }
@@ -49,27 +62,44 @@
   #chart { width:100%; height:160px; display:block; }
   .ranges { display:flex; justify-content:space-around; align-items:center; margin-top:2px; }
   .ranges button { height:30px; border:0; background:transparent; color:#b0b4ba; font-weight:500; border-radius:15px; padding:0 12px; font-size:13px; }
-  .ranges button.on { background:#f7f5f0; color:#c99a08; }
+  .ranges button.on { background:var(--paper); color:#c99a08; }
   .chart-note { color:#b0b4ba; font-size:11px; text-align:center; margin-top:8px; line-height:1.4; }
   .chart-wrap { position:relative; }
   .tip { position:absolute; display:none; pointer-events:none; background:#1e2329; color:#fff; border-radius:8px; padding:5px 8px; font-size:12px; line-height:1.35; z-index:2; white-space:nowrap; }
   .tip b { display:block; font-size:13px; font-weight:600; color:var(--gold); }
+  .alloc { background:var(--card); border-radius:18px; padding:16px; border:1px solid var(--line); margin-bottom:14px; }
+  .alloc-row { display:flex; align-items:center; gap:16px; }
+  .donut-wrap { width:140px; height:140px; flex-shrink:0; }
+  .legend { flex:1; font-size:13px; }
+  .legend-item { display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid var(--line); }
+  .legend-item:last-child { border-bottom:0; }
+  .swatch { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:6px; }
+  .conc { font-size:12.5px; color:var(--muted); margin-top:8px; }
 </style>
 </head>
 <body>
 <main>
-  <h1>持仓地图</h1>
-  <p class="sub">改完可以先看数据。不保存就点「刷新」，会回到上次保存的仓位。 · <a href="13f.html" style="color:#c99a08">13F 披露</a></p>
-  <section class="chart-card">
-    <div class="chart-high" id="chartHigh">—</div>
-    <div class="chart-wrap">
-      <div class="tip" id="tip"></div>
-      <svg id="chart" viewBox="0 0 360 150" preserveAspectRatio="none"></svg>
+  <header>
+    <div>
+      <h1>持仓地图</h1>
+      <div class="meta" id="asof">Portfolio Snapshot · As of —</div>
     </div>
-    <div class="chart-low" id="chartLow"></div>
-    <div class="ranges" id="ranges"></div>
-    <div class="chart-note" id="chartNote"></div>
-  </section>
+    <button class="theme-btn" id="theme">深色</button>
+  </header>
+  <p class="sub">改完可以先看数据。不保存就点「刷新」，会回到上次保存的仓位。 · <a href="13f.html" style="color:#c99a08">13F 披露</a></p>
+  <div class="top-grid">
+    <section class="chart-card">
+      <div class="chart-high" id="chartHigh">—</div>
+      <div class="chart-wrap">
+        <div class="tip" id="tip"></div>
+        <svg id="chart" viewBox="0 0 360 150" preserveAspectRatio="none"></svg>
+      </div>
+      <div class="chart-low" id="chartLow"></div>
+      <div class="ranges" id="ranges"></div>
+      <div class="chart-note" id="chartNote"></div>
+    </section>
+    <section class="alloc" id="alloc"></section>
+  </div>
   <section class="kpis" id="kpis"></section>
   <section id="lots"></section>
   <div class="actions">
@@ -85,20 +115,21 @@
   </div>
 </main>
 <script>
-const KEY = "holdings-map-phone-v4";
+const KEY = "holdings-map-phone-v5";
 const SEED = [
-  {id:"usdt",name:"现金 U",ticker:"USDT",type:"cash",shares:22250,cost:22250,price:1},
-  {id:"crcl",name:"Circle",ticker:"CRCL",type:"stock",shares:150,cost:11550,price:79.84,prev:80.14},
-  {id:"rklb",name:"Rocket Lab",ticker:"RKLB",type:"stock",shares:57.7,cost:3750,price:60.01},
-  {id:"otc",name:"场外基金",ticker:"OTC",type:"fund",shares:0,cost:5200,price:0},
-  {id:"spcx",name:"SpaceX",ticker:"SPCX",type:"stock",shares:10.15,cost:1500,price:144.09,prev:144.13},
-  {id:"goog",name:"谷歌",ticker:"GOOG",type:"stock",shares:2.547,cost:750,price:282.71}
+  {id:"usdt",name:"现金 U",ticker:"USDT",type:"cash",shares:22150,cost:22150,price:1},
+  {id:"crcl",name:"Circle",ticker:"CRCL",type:"stock",shares:140,cost:10800,price:66.94},
+  {id:"rklb",name:"Rocket Lab",ticker:"RKLB",type:"stock",shares:57.7,cost:3750,price:45.8},
+  {id:"otc",name:"场外基金",ticker:"OTC",type:"fund",shares:0,cost:3800,price:0},
+  {id:"spcx",name:"SpaceX",ticker:"SPCX",type:"stock",shares:15.777,cost:2250,price:123.73},
+  {id:"goog",name:"谷歌",ticker:"GOOG",type:"stock",shares:7.777,cost:2250,price:283.69}
 ];
 let lots = load();
 let showEmpty = false;
 let focus = "";
 const NAMES = {CRCL:"Circle",RKLB:"Rocket Lab",PDD:"拼多多",DRAM:"Memory ETF",NVDA:"英伟达",TSLA:"特斯拉",AAPL:"苹果",ASTS:"AST SpaceMobile",QQQ:"纳指ETF",SPCX:"SpaceX",GOOG:"谷歌"};
 const SNAP = "holdings-map-snaps";
+const COLORS = ["#f0b90b","#0ecb81","#5b8def","#f6465d","#a78bfa","#f59e0b","#94a3b8","#22d3ee"];
 function isEmpty(l) { return l.type !== "cash" && !(Number(l.shares) > 0) && !(Number(l.cost) > 0); }
 function costOf(list) { return (list||[]).reduce((a,b)=>a+Number(b.cost||0),0); }
 function load() {
@@ -141,6 +172,15 @@ function render() {
   const up = t.pnl >= 0;
   const day = t.today;
   const dayUp = day >= 0;
+  const now = new Date();
+  document.getElementById("asof").textContent = "Portfolio Snapshot · As of " + now.toLocaleString("zh-CN",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}) + " · Prices: Binance Public";
+
+  const positions = lots.map(l => ({l, v: mv(l)})).filter(x => x.v > 0.5).sort((a,b)=>b.v-a.v);
+  const top1 = positions[0] ? positions[0].v / t.value * 100 : 0;
+  const top3 = positions.slice(0,3).reduce((a,b)=>a+b.v,0) / t.value * 100;
+  const maxNonCash = positions.filter(x=>x.l.type!=="cash")[0];
+  const maxNonCashPct = maxNonCash ? maxNonCash.v / t.value * 100 : 0;
+
   const cards = [
     ["总市值", money(t.value)+" U", "按现价", ""],
     ["现金 U", money(t.cash)+" U", share(t.cash, t.value), ""],
@@ -149,18 +189,42 @@ function render() {
     ["总成本", money(t.cost)+" U", "含现金", "wide"],
     ["浮动盈亏", (up?"+":"")+money(t.pnl)+" U", t.investedCost ? pct(t.pnl / t.investedCost * 100) : "—", up?"up":"down"],
     ["今日盈亏", (dayUp?"+":"")+money(day)+" U", todayBase() ? pct(day / todayBase() * 100) : "拉现价后显示", dayUp?"up":"down"],
+    ["集中度", top1.toFixed(1)+"%", "前1大持仓", ""],
+    ["前3集中度", top3.toFixed(1)+"%", "前3大持仓合计", ""],
   ];
   document.getElementById("kpis").innerHTML = cards.map(([k,v,s,tone])=>`<div class="kpi ${tone}"><span>${k}</span><b>${v}</b><small>${s}</small></div>`).join("");
+
+  // Donut
+  const totalV = t.value || 1;
+  let acc = 0;
+  const segs = positions.map((p, i) => {
+    const pctv = p.v / totalV;
+    const start = acc;
+    acc += pctv;
+    return { ...p, start, end: acc, color: COLORS[i % COLORS.length] };
+  });
+  const r = 58, cx = 70, cy = 70, stroke = 18;
+  const circ = 2 * Math.PI * r;
+  let donut = `<svg viewBox="0 0 140 140" class="donut-wrap"><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--donut-bg)" stroke-width="${stroke}"/>`;
+  segs.forEach(s => {
+    const len = (s.end - s.start) * circ;
+    const offset = -s.start * circ;
+    donut += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${s.color}" stroke-width="${stroke}" stroke-dasharray="${len} ${circ-len}" stroke-dashoffset="${offset}" stroke-linecap="butt" transform="rotate(-90 ${cx} ${cy})"/>`;
+  });
+  donut += `<text x="${cx}" y="${cy-4}" text-anchor="middle" font-size="13" font-weight="600" fill="var(--ink)">${money(t.value)}</text><text x="${cx}" y="${cy+12}" text-anchor="middle" font-size="10" fill="var(--muted)">总市值</text></svg>`;
+  const legend = segs.map(s => `<div class="legend-item"><span><span class="swatch" style="background:${s.color}"></span>${s.l.name}</span><span>${share(s.v, totalV)}</span></div>`).join("");
+  document.getElementById("alloc").innerHTML = `<div class="alloc-row">${donut}<div class="legend">${legend}</div></div><div class="conc">前1大 ${top1.toFixed(1)}% · 前3大 ${top3.toFixed(1)}% · 最大非现金 ${maxNonCash ? maxNonCash.l.name + " " + maxNonCashPct.toFixed(1) + "%" : "—"}</div>`;
+
   document.getElementById("lots").innerHTML = lots.map((l,i) => {
     if (isEmpty(l) && !showEmpty) return "";
     const v = mv(l);
     const p = v - Number(l.cost||0);
     const cls = p>0.005?"up":p<-0.005?"down":"";
-      const day = (l.type==="stock" && Number(l.shares)>0 && Number(l.prev)>0 && Number(l.price)>0) ? Number(l.shares)*(Number(l.price)-Number(l.prev)) : null;
-      const dayTxt = day==null ? "" : `<div style="font-size:12px">${day>=0?"+":""}${money(day)} 今日</div>`;
-      const costPct = Number(l.cost) > 0 ? " " + pct(p / Number(l.cost) * 100) : "";
-      const del = l.type === "cash" ? "" : `<button class="del" data-del="${i}">删除</button>`;
-      return `<div class="card">
+    const day = (l.type==="stock" && Number(l.shares)>0 && Number(l.prev)>0 && Number(l.price)>0) ? Number(l.shares)*(Number(l.price)-Number(l.prev)) : null;
+    const dayTxt = day==null ? "" : `<div style="font-size:12px">${day>=0?"+":""}${money(day)} 今日</div>`;
+    const costPct = Number(l.cost) > 0 ? " " + pct(p / Number(l.cost) * 100) : "";
+    const del = l.type === "cash" ? "" : `<button class="del" data-del="${i}">删除</button>`;
+    return `<div class="card">
       <div class="row"><div><div class="name click" data-focus="${l.ticker||""}">${l.name}</div><div class="ticker">${l.ticker}</div></div>
       <div class="mv ${cls}">${money(v)} U<div style="font-size:12px">${p>=0?"+":""}${money(p)}${costPct}</div>${dayTxt}${del}</div></div>
       <div class="grid">
@@ -248,43 +312,38 @@ document.getElementById("export").onclick = () => {
 };
 document.getElementById("import").onclick = () => document.getElementById("importFile").click();
 document.getElementById("importFile").onchange = (e) => {
-  const file = e.target.files && e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
     try {
-      const data = JSON.parse(reader.result);
-      if (!data.lots) throw new Error("bad");
-      lots = data.lots;
-      render();
-      drawChart();
-      document.getElementById("status").textContent = "已导入，点保存才记住";
-    } catch {
-      document.getElementById("status").textContent = "导入失败";
-    }
+      const data = JSON.parse(r.result);
+      if (data && Array.isArray(data.lots)) {
+        lots = data.lots;
+        render();
+        drawChart();
+        document.getElementById("status").textContent = "已导入，点保存才记住";
+      }
+    } catch {}
   };
-  reader.readAsText(file);
+  r.readAsText(f);
 };
 document.getElementById("reload").onclick = () => {
   lots = load();
   render();
   drawChart();
-  document.getElementById("status").textContent = "已还原上次保存的仓位";
+  document.getElementById("status").textContent = "已刷新到上次保存";
 };
 async function onePrice(url) {
   const ctrl = new AbortController();
-  const stop = setTimeout(() => ctrl.abort(), 4000);
+  const stop = setTimeout(() => ctrl.abort(), 5000);
   try {
     const r = await fetch(url, { signal: ctrl.signal });
     if (!r.ok) return 0;
     const d = await r.json();
-    const n = Number(d.price || d.data?.bp || d.data?.ap || 0);
-    return n > 0 ? n : 0;
-  } catch {
-    return 0;
-  } finally {
-    clearTimeout(stop);
-  }
+    return Number(d.price || d.data?.price || d.data?.lastPrice || 0);
+  } catch { return 0; }
+  finally { clearTimeout(stop); }
 }
 async function quoteOf(ticker) {
   const t = ticker.toUpperCase().replace(/USDT$/, "");
@@ -401,41 +460,30 @@ function paint(values, times) {
   chartPts = pts.map((p, i) => ({x:p[0], y:p[1], v:values[i], t:times && times[i]}));
   const line = pts.map(p => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" ");
   const area = `0,${h} ` + line + ` ${w},${h}`;
-  svg.innerHTML = `<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f0b90b" stop-opacity=".4"/><stop offset="100%" stop-color="#f0b90b" stop-opacity=".02"/></linearGradient></defs><polygon points="${area}" fill="url(#g)"/><polyline points="${line}" fill="none" stroke="#f0b90b" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><line id="cross" x1="0" y1="0" x2="0" y2="${h}" stroke="#eaecef" stroke-opacity=".3" stroke-width="1" visibility="hidden"/><circle id="dot" r="3.5" fill="#f0b90b" visibility="hidden"/>`;
+  svg.innerHTML = `<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f0b90b" stop-opacity=".4"/><stop offset="100%" stop-color="#f0b90b" stop-opacity=".02"/></linearGradient></defs><polygon points="${area}" fill="url(#g)"/><polyline points="${line}" fill="none" stroke="#f0b90b" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><line id="cross" x1="0" y1="0" x2="0" y2="${h}" stroke="#eaecef" stroke-opacity=".3" stroke-width="1" visibility="hidden"/>`;
 }
-function showTip(clientX) {
+function showTip(e) {
+  const tip = document.getElementById("tip");
   const svg = document.getElementById("chart");
-  const tip = document.getElementById("tip");
-  const cross = document.getElementById("cross");
-  const dot = document.getElementById("dot");
-  if (!chartPts.length || !svg) return;
-  const box = svg.getBoundingClientRect();
-  const x = (clientX - box.left) / box.width * 360;
-  let best = chartPts[0], dist = Infinity;
-  chartPts.forEach(p => { const d = Math.abs(p.x - x); if (d < dist) { dist = d; best = p; } });
-  if (cross) { cross.setAttribute("x1", best.x); cross.setAttribute("x2", best.x); cross.setAttribute("visibility", "visible"); }
-  if (dot) { dot.setAttribute("cx", best.x); dot.setAttribute("cy", best.y); dot.setAttribute("visibility", "visible"); }
-  const when = best.t ? new Date(best.t).toLocaleString("zh-CN", {month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit"}) : "";
-  tip.innerHTML = `<b>$${money(best.v)}</b>${when}`;
+  const rect = svg.getBoundingClientRect();
+  const x = (e.clientX - rect.left) / rect.width * 360;
+  if (!chartPts.length) { tip.style.display = "none"; return; }
+  let best = chartPts[0], bestD = Infinity;
+  chartPts.forEach(p => { const d = Math.abs(p.x - x); if (d < bestD) { bestD = d; best = p; } });
   tip.style.display = "block";
-  const left = (best.x / 360) * box.width;
-  tip.style.left = Math.max(8, Math.min(left - 40, box.width - 90)) + "px";
-  tip.style.top = "8px";
-}
-function hideTip() {
-  const tip = document.getElementById("tip");
+  tip.style.left = (best.x / 360 * 100) + "%";
+  tip.style.top = (best.y / 150 * 100 - 8) + "%";
+  const d = best.t ? new Date(best.t).toLocaleString("zh-CN",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}) : "";
+  tip.innerHTML = `<b>${money(best.v)} U</b>${d}`;
   const cross = document.getElementById("cross");
-  const dot = document.getElementById("dot");
-  if (tip) tip.style.display = "none";
-  if (cross) cross.setAttribute("visibility", "hidden");
-  if (dot) dot.setAttribute("visibility", "hidden");
+  if (cross) { cross.setAttribute("x1", best.x); cross.setAttribute("x2", best.x); cross.setAttribute("visibility", "visible"); }
 }
-const chartEl = document.getElementById("chart");
-chartEl.addEventListener("mousemove", e => showTip(e.clientX));
-chartEl.addEventListener("mouseleave", hideTip);
-chartEl.addEventListener("touchstart", e => { if (e.touches[0]) showTip(e.touches[0].clientX); }, {passive:true});
-chartEl.addEventListener("touchmove", e => { if (e.touches[0]) showTip(e.touches[0].clientX); }, {passive:true});
-chartEl.addEventListener("touchend", hideTip);
+document.getElementById("chart").addEventListener("mousemove", showTip);
+document.getElementById("chart").addEventListener("mouseleave", () => {
+  document.getElementById("tip").style.display = "none";
+  const cross = document.getElementById("cross");
+  if (cross) cross.setAttribute("visibility", "hidden");
+});
 async function drawChart() {
   const gen = ++chartGen;
   const spec = RANGES.find(r => r.id === range);
@@ -486,6 +534,16 @@ async function drawChart() {
     if (gen === chartGen) paint([]);
   }
 }
+// Theme
+const themeBtn = document.getElementById("theme");
+function applyTheme(dark) {
+  document.body.classList.toggle("dark", dark);
+  themeBtn.textContent = dark ? "浅色" : "深色";
+  localStorage.setItem("holdings-theme", dark ? "dark" : "light");
+}
+themeBtn.onclick = () => applyTheme(!document.body.classList.contains("dark"));
+applyTheme(localStorage.getItem("holdings-theme") === "dark");
+
 render();
 refreshQuotes();
 drawChart();
