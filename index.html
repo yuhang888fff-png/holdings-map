@@ -182,11 +182,11 @@ function render() {
   const maxNonCashPct = maxNonCash ? maxNonCash.v / t.value * 100 : 0;
 
   const cards = [
+    ["总成本", money(t.cost)+" U", "含现金", "wide"],
     ["总市值", money(t.value)+" U", "按现价", ""],
     ["现金 U", money(t.cash)+" U", share(t.cash, t.value), ""],
     ["非现金仓位", money(t.invested)+" U", share(t.invested, t.value), ""],
     ["非现金仓位成本", money(t.investedCost)+" U", "股票和基金本金", ""],
-    ["总成本", money(t.cost)+" U", "含现金", "wide"],
     ["浮动盈亏", (up?"+":"")+money(t.pnl)+" U", t.investedCost ? pct(t.pnl / t.investedCost * 100) : "—", up?"up":"down"],
     ["今日盈亏", (dayUp?"+":"")+money(day)+" U", todayBase() ? pct(day / todayBase() * 100) : "拉现价后显示", dayUp?"up":"down"],
     ["集中度", top1.toFixed(1)+"%", "前1大持仓", ""],
