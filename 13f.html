@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>个人持仓披露 · 13F 风格</title>
+<style>
+  :root {
+    --paper:#f7f5f0; --card:#fff; --ink:#1e2329; --muted:#6f7680;
+    --line:#e8e4dc; --gold:#f0b90b; --up:#0a9d62; --down:#f6465d;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:-apple-system,"PingFang SC","Noto Sans SC",serif; }
+  main { max-width:920px; margin:0 auto; padding:28px 18px 64px; }
+  .header { text-align:center; margin-bottom:24px; }
+  .header h1 { font-size:22px; margin:0 0 4px; letter-spacing:.5px; color:#c99a08; font-weight:600; }
+  .header .sub { color:var(--muted); font-size:13px; }
+  .meta { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px 18px; margin-bottom:16px; display:grid; grid-template-columns:1fr 1fr; gap:10px 20px; font-size:13.5px; }
+  .meta b { display:block; color:var(--muted); font-weight:500; font-size:12px; margin-bottom:2px; }
+  .summary { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px 18px; margin-bottom:18px; }
+  .summary h2 { font-size:16px; margin:0 0 10px; }
+  .sum-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+  .sum-grid div { }
+  .sum-grid b { display:block; font-size:20px; font-variant-numeric:tabular-nums; }
+  .sum-grid span { color:var(--muted); font-size:12px; }
+  .note { color:var(--muted); font-size:12px; margin-top:10px; line-height:1.5; }
+  table { width:100%; border-collapse:collapse; background:var(--card); border-radius:16px; overflow:hidden; border:1px solid var(--line); font-size:13.5px; }
+  th { background:#faf8f4; text-align:left; padding:10px 12px; font-weight:600; color:#1e2329; border-bottom:1px solid var(--line); }
+  td { padding:11px 12px; border-bottom:1px solid var(--line); font-variant-numeric:tabular-nums; }
+  tr:last-child td { border-bottom:0; }
+  .right { text-align:right; }
+  .ticker { color:var(--muted); font-size:12px; }
+  .pct { color:var(--muted); font-size:12px; }
+  .down { color:var(--down); }
+  .up { color:var(--up); }
+  .footer { margin-top:18px; color:var(--muted); font-size:12px; line-height:1.5; }
+  @media (max-width:640px) {
+    .meta, .sum-grid { grid-template-columns:1fr; }
+    table { font-size:12.5px; }
+    th, td { padding:8px 8px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="header">
+    <h1>个人持仓披露</h1>
+    <div class="sub">Personal Holdings Report · 13F-Style Information Table</div>
+    <div class="sub" style="margin-top:4px">报告期：2026-11-05 · 按现价</div>
+  </div>
+
+  <div class="meta">
+    <div><b>报告人</b>Hang Yu / 航宇</div>
+    <div><b>报告类型</b>个人持仓披露（非监管文件）</div>
+    <div><b>总市值</b>42,122.61 U</div>
+    <div><b>持仓数量</b>6 项（含现金）</div>
+  </div>
+
+  <div class="summary">
+    <h2>汇总</h2>
+    <div class="sum-grid">
+      <div><b>42,122.61</b><span>总市值 U</span></div>
+      <div><b>22,150</b><span>现金 U（52.6%）</span></div>
+      <div><b>19,972.61</b><span>非现金仓位（47.4%）</span></div>
+    </div>
+    <div class="note">说明：13F 主要披露美国上市权益证券。本页按同样表格结构列出全部持仓（含现金与场外基金），仅供个人查看，不是正式 SEC 申报。</div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>发行人</th>
+        <th>类别</th>
+        <th class="right">市值 U</th>
+        <th class="right">股数 / 金额</th>
+        <th class="right">占比</th>
+        <th class="right">成本 U</th>
+        <th class="right">浮动盈亏</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Circle<br><span class="ticker">CRCL · COM</span></td>
+        <td>普通股</td>
+        <td class="right">9,371.60</td>
+        <td class="right">140 SH</td>
+        <td class="right">22.25%</td>
+        <td class="right">10,800</td>
+        <td class="right down">-1,428.40</td>
+      </tr>
+      <tr>
+        <td>现金 U<br><span class="ticker">USDT · CASH</span></td>
+        <td>现金</td>
+        <td class="right">22,150.00</td>
+        <td class="right">22,150</td>
+        <td class="right">52.58%</td>
+        <td class="right">22,150</td>
+        <td class="right">+0.00</td>
+      </tr>
+      <tr>
+        <td>Rocket Lab<br><span class="ticker">RKLB · COM</span></td>
+        <td>普通股</td>
+        <td class="right">2,642.66</td>
+        <td class="right">57.7 SH</td>
+        <td class="right">6.27%</td>
+        <td class="right">3,750</td>
+        <td class="right down">-1,107.34</td>
+      </tr>
+      <tr>
+        <td>场外基金<br><span class="ticker">OTC · FUND</span></td>
+        <td>场外基金</td>
+        <td class="right">3,800.00</td>
+        <td class="right">—</td>
+        <td class="right">9.02%</td>
+        <td class="right">3,800</td>
+        <td class="right">+0.00</td>
+      </tr>
+      <tr>
+        <td>SpaceX<br><span class="ticker">SPCX · COM</span></td>
+        <td>普通股</td>
+        <td class="right">1,952.09</td>
+        <td class="right">15.777 SH</td>
+        <td class="right">4.63%</td>
+        <td class="right">2,250</td>
+        <td class="right down">-297.91</td>
+      </tr>
+      <tr>
+        <td>Alphabet<br><span class="ticker">GOOG · COM</span></td>
+        <td>普通股</td>
+        <td class="right">2,206.26</td>
+        <td class="right">7.777 SH</td>
+        <td class="right">5.24%</td>
+        <td class="right">2,250</td>
+        <td class="right down">-43.74</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="footer">
+    数据来源：个人持仓地图截图（2026-11-05）。市值按现价计算。本页仅个人使用，不构成任何投资建议或正式监管披露。<br>
+    返回 <a href="/holdings-map/?v=9" style="color:#c99a08">持仓地图</a>
+  </div>
+</main>
+</body>
+</html>
