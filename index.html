@@ -75,6 +75,11 @@
   .legend-item:last-child { border-bottom:0; }
   .swatch { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:6px; }
   .conc { font-size:12.5px; color:var(--muted); margin-top:8px; }
+  .treemap { background:var(--card); border-radius:18px; padding:16px; border:1px solid var(--line); margin-bottom:14px; }
+  .treemap h3 { margin:0 0 10px; font-size:14px; font-weight:600; color:var(--ink); }
+  .treemap-box { display:flex; flex-wrap:wrap; gap:4px; min-height:120px; }
+  .tm-item { display:flex; align-items:center; justify-content:center; border-radius:8px; color:#1e2329; font-size:12px; font-weight:600; text-align:center; padding:6px; overflow:hidden; line-height:1.2; }
+  .cost-note { color:var(--muted); font-size:11.5px; margin:0; grid-column:1 / -1; padding:0 2px 4px; }
 </style>
 </head>
 <body>
@@ -100,6 +105,7 @@
     </section>
     <section class="alloc" id="alloc"></section>
   </div>
+  <section class="treemap" id="treemap"></section>
   <section class="kpis" id="kpis"></section>
   <section id="lots"></section>
   <div class="actions">
@@ -192,10 +198,18 @@ function render() {
     ["集中度", top1.toFixed(1)+"%", "前1大持仓", ""],
     ["前3集中度", top3.toFixed(1)+"%", "前3大持仓合计", ""],
   ];
-  document.getElementById("kpis").innerHTML = cards.map(([k,v,s,tone])=>`<div class="kpi ${tone}"><span>${k}</span><b>${v}</b><small>${s}</small></div>`).join("");
+  document.getElementById("kpis").innerHTML = cards.map(([k,v,s,tone])=>`<div class="kpi ${tone}"><span>${k}</span><b>${v}</b><small>${s}</small></div>`).join("") + `<div class="cost-note">总成本 = 现金本金 + 股票/基金本金。浮动盈亏 = 现价市值 − 总成本。</div>`;
+
+  const totalV = t.value || 1;
+  // Treemap
+  const tmItems = positions.map((p, i) => {
+    const pctv = p.v / totalV * 100;
+    const flex = Math.max(pctv, 3);
+    return `<div class="tm-item" style="flex:${flex} 1 ${flex}%; background:${COLORS[i % COLORS.length]}; min-width:${Math.max(pctv * 1.5, 48)}px" title="${p.l.name} ${share(p.v, totalV)}">${p.l.name}<br>${share(p.v, totalV)}</div>`;
+  }).join("");
+  document.getElementById("treemap").innerHTML = `<h3>仓位面积图 · 方块大小 = 市值占比</h3><div class="treemap-box">${tmItems}</div>`;
 
   // Donut
-  const totalV = t.value || 1;
   let acc = 0;
   const segs = positions.map((p, i) => {
     const pctv = p.v / totalV;
@@ -215,7 +229,8 @@ function render() {
   const legend = segs.map(s => `<div class="legend-item"><span><span class="swatch" style="background:${s.color}"></span>${s.l.name}</span><span>${share(s.v, totalV)}</span></div>`).join("");
   document.getElementById("alloc").innerHTML = `<div class="alloc-row">${donut}<div class="legend">${legend}</div></div><div class="conc">前1大 ${top1.toFixed(1)}% · 前3大 ${top3.toFixed(1)}% · 最大非现金 ${maxNonCash ? maxNonCash.l.name + " " + maxNonCashPct.toFixed(1) + "%" : "—"}</div>`;
 
-  document.getElementById("lots").innerHTML = lots.map((l,i) => {
+  const sortedLots = lots.map((l, i) => ({l, i, v: mv(l)})).sort((a, b) => b.v - a.v);
+  document.getElementById("lots").innerHTML = sortedLots.map(({l, i}) => {
     if (isEmpty(l) && !showEmpty) return "";
     const v = mv(l);
     const p = v - Number(l.cost||0);
