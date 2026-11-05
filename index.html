@@ -158,10 +158,11 @@ function render() {
     const cls = p>0.005?"up":p<-0.005?"down":"";
       const day = (l.type==="stock" && Number(l.shares)>0 && Number(l.prev)>0 && Number(l.price)>0) ? Number(l.shares)*(Number(l.price)-Number(l.prev)) : null;
       const dayTxt = day==null ? "" : `<div style="font-size:12px">${day>=0?"+":""}${money(day)} 今日</div>`;
+      const costPct = Number(l.cost) > 0 ? " " + pct(p / Number(l.cost) * 100) : "";
       const del = l.type === "cash" ? "" : `<button class="del" data-del="${i}">删除</button>`;
       return `<div class="card">
       <div class="row"><div><div class="name click" data-focus="${l.ticker||""}">${l.name}</div><div class="ticker">${l.ticker}</div></div>
-      <div class="mv ${cls}">${money(v)} U<div style="font-size:12px">${p>=0?"+":""}${money(p)}</div>${dayTxt}${del}</div></div>
+      <div class="mv ${cls}">${money(v)} U<div style="font-size:12px">${p>=0?"+":""}${money(p)}${costPct}</div>${dayTxt}${del}</div></div>
       <div class="grid">
         <label>股数<input data-i="${i}" data-k="shares" value="${l.shares}" inputmode="decimal"></label>
         <label>总成本 U<input data-i="${i}" data-k="cost" value="${l.cost}" inputmode="decimal"></label>
