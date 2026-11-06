@@ -474,19 +474,26 @@ async function onePrice(url) {
 }
 async function quoteOf(ticker) {
   const t = ticker.toUpperCase().replace(/USDT$/, "");
-  const pair = t.endsWith("B") ? t + "USDT" : t + "BUSDT";
-  const ctrl = new AbortController();
-  const stop = setTimeout(() => ctrl.abort(), 5000);
-  try {
-    const r = await fetch("https://data-api.binance.vision/api/v3/ticker/24hr?symbol=" + pair, { signal: ctrl.signal });
-    if (r.ok) {
-      const d = await r.json();
-      const price = Number(d.lastPrice || d.price || 0);
-      const prev = Number(d.prevClosePrice || d.openPrice || 0);
-      if (price > 0) return { price, prev };
-    }
-  } catch {}
-  finally { clearTimeout(stop); }
+  const candidates = [];
+  if (t === "GOOG") candidates.push("GOOGLBUSDT");
+  candidates.push(t + "BUSDT");
+  if (t.endsWith("B")) candidates.push(t + "USDT");
+  else candidates.push(t + "BBUSDT");
+  const uniq = [...new Set(candidates)];
+  for (const pair of uniq) {
+    const ctrl = new AbortController();
+    const stop = setTimeout(() => ctrl.abort(), 4000);
+    try {
+      const r = await fetch("https://data-api.binance.vision/api/v3/ticker/24hr?symbol=" + pair, { signal: ctrl.signal });
+      if (r.ok) {
+        const d = await r.json();
+        const price = Number(d.lastPrice || d.price || 0);
+        const prev = Number(d.prevClosePrice || d.openPrice || 0);
+        if (price > 0) return { price, prev };
+      }
+    } catch {}
+    finally { clearTimeout(stop); }
+  }
   const price = await onePrice("https://www.binance.com/bapi/equity/v1/public/equity/market/get-latest-quote?symbol=" + t);
   return { price, prev: 0 };
 }
