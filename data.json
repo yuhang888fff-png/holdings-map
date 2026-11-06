@@ -1,0 +1,12 @@
+{
+  "lots": [
+    {"id":"usdt","name":"现金 U","ticker":"USDT","type":"cash","shares":22150,"cost":22150,"price":1},
+    {"id":"crcl","name":"Circle","ticker":"CRCL","type":"stock","shares":140,"cost":10800,"price":66.94},
+    {"id":"rklb","name":"Rocket Lab","ticker":"RKLB","type":"stock","shares":57.7,"cost":3750,"price":45.8},
+    {"id":"otc","name":"场外基金","ticker":"OTC","type":"fund","shares":0,"cost":3800,"price":0},
+    {"id":"spcx","name":"SpaceX","ticker":"SPCX","type":"stock","shares":15.777,"cost":2250,"price":123.73},
+    {"id":"goog","name":"谷歌","ticker":"GOOG","type":"stock","shares":7.777,"cost":2250,"price":283.69}
+  ],
+  "savedAt": 1730822400000,
+  "version": 1
+}
