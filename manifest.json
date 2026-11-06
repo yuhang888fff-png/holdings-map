@@ -1,0 +1,17 @@
+{
+  "name": "Voyage Track （航迹投资）",
+  "short_name": "Voyage Track",
+  "description": "个人持仓地图",
+  "start_url": "/holdings-map/?v=19",
+  "display": "standalone",
+  "background_color": "#0e1116",
+  "theme_color": "#0e1116",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
