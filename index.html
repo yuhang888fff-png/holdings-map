@@ -56,6 +56,9 @@
   .secondary { background:var(--card); color:var(--ink); border:1px solid var(--line); }
   .up { color:#0a9d62; } .down { color:var(--down); }
   .note { color:var(--muted); font-size:12px; align-self:center; flex:1; min-width:140px; }
+  .sync-box { background:var(--card); border-radius:18px; padding:14px; border:1px solid var(--line); margin-top:12px; }
+  .sync-row, .token-row { display:flex; gap:8px; align-items:center; margin-bottom:8px; }
+  .token-row { margin-bottom:0; }
   .chart-card { background:var(--card); border-radius:18px; padding:16px 12px 12px; margin:0 0 14px; border:1px solid var(--line); }
   .chart-high { text-align:center; color:#b0b4ba; font-size:13px; margin-bottom:2px; font-variant-numeric:tabular-nums; }
   .chart-low { color:#b0b4ba; font-size:13px; margin:0 0 10px 10px; font-variant-numeric:tabular-nums; }
@@ -118,6 +121,18 @@
     <input id="importFile" type="file" accept="application/json" hidden>
     <span class="note" id="status">没保存的改动，点刷新会还原</span>
     <button class="accent" id="quotes">拉取币安现价</button>
+  </div>
+  <div class="sync-box" id="syncBox">
+    <div class="sync-row">
+      <span class="note" id="syncStatus">未同步</span>
+      <button class="secondary" id="syncNow">同步到云端</button>
+      <button class="secondary" id="pullCloud">从云端拉取</button>
+    </div>
+    <div class="token-row">
+      <input id="ghToken" type="password" placeholder="GitHub Token（只存这台设备，用于同步）" style="flex:1;height:36px">
+      <button class="secondary" id="saveToken">保存Token</button>
+    </div>
+    <div class="note" style="margin-top:6px">Token 只存在本机浏览器，不会上传。同步用 GitHub 文件版本号，冲突会提示，不会乱覆盖。</div>
   </div>
 </main>
 <script>
@@ -302,13 +317,103 @@ function recordSnap() {
   if (i >= 0) snaps[i] = row; else snaps.push(row);
   localStorage.setItem(SNAP, JSON.stringify(snaps.slice(-400)));
 }
-document.getElementById("save").onclick = () => {
-  const prev = localStorage.getItem(KEY);
-  if (prev) localStorage.setItem(KEY+"-prev", prev);
-  localStorage.setItem(KEY, JSON.stringify({lots, savedAt: Date.now()}));
-  recordSnap();
-  document.getElementById("status").textContent = "已保存 " + new Date().toLocaleTimeString("zh-CN",{hour:"2-digit",minute:"2-digit"});
+const GH_OWNER = "yuhang888fff-png";
+const GH_REPO = "holdings-map";
+const DATA_FILE = "data.json";
+const RAW_URL = "https://raw.githubusercontent.com/" + GH_OWNER + "/" + GH_REPO + "/main/" + DATA_FILE;
+
+function getToken() { return localStorage.getItem("holdings-gh-token") || ""; }
+function setToken(t) { if (t) localStorage.setItem("holdings-gh-token", t); else localStorage.removeItem("holdings-gh-token"); }
+
+async function fetchCloud() {
+  const r = await fetch(RAW_URL + "?t=" + Date.now());
+  if (!r.ok) throw new Error("fetch failed");
+  return await r.json();
+}
+
+async function getFileSha(token) {
+  const r = await fetch("https://api.github.com/repos/" + GH_OWNER + "/" + GH_REPO + "/contents/" + DATA_FILE, {
+    headers: { Authorization: "Bearer " + token, Accept: "application/vnd.github+json" }
+  });
+  if (!r.ok) throw new Error("sha fetch failed");
+  const d = await r.json();
+  return d.sha;
+}
+
+async function pushToCloud(token, payload) {
+  const sha = await getFileSha(token);
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
+  const r = await fetch("https://api.github.com/repos/" + GH_OWNER + "/" + GH_REPO + "/contents/" + DATA_FILE, {
+    method: "PUT",
+    headers: { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "Content-Type": "application/json" },
+    body: JSON.stringify({ message: "update holdings", content, sha })
+  });
+  if (r.status === 409) throw new Error("conflict");
+  if (!r.ok) throw new Error("push failed");
+  return true;
+}
+
+document.getElementById("saveToken").onclick = () => {
+  const t = document.getElementById("ghToken").value.trim();
+  setToken(t);
+  document.getElementById("syncStatus").textContent = t ? "Token 已保存（仅本机）" : "Token 已清除";
+  document.getElementById("ghToken").value = "";
 };
+
+document.getElementById("pullCloud").onclick = async () => {
+  const status = document.getElementById("syncStatus");
+  status.textContent = "正在拉取…";
+  try {
+    const data = await fetchCloud();
+    if (data && Array.isArray(data.lots) && data.lots.length) {
+      const prev = localStorage.getItem(KEY);
+      if (prev) localStorage.setItem(KEY + "-prev", prev);
+      localStorage.setItem(KEY, JSON.stringify({ lots: data.lots, savedAt: data.savedAt || Date.now() }));
+      lots = data.lots;
+      render();
+      drawChart();
+      status.textContent = "已从云端拉取 " + new Date(data.savedAt || Date.now()).toLocaleString("zh-CN", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
+    } else {
+      status.textContent = "云端数据无效";
+    }
+  } catch (e) {
+    status.textContent = "拉取失败";
+  }
+};
+
+document.getElementById("syncNow").onclick = async () => {
+  const token = getToken();
+  const status = document.getElementById("syncStatus");
+  if (!token) { status.textContent = "请先保存 Token"; return; }
+  status.textContent = "正在同步…";
+  const payload = { lots, savedAt: Date.now(), version: 1 };
+  try {
+    await pushToCloud(token, payload);
+    localStorage.setItem(KEY, JSON.stringify({ lots, savedAt: payload.savedAt }));
+    status.textContent = "已同步到云端 " + new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
+  } catch (e) {
+    status.textContent = e.message === "conflict" ? "云端有更新，请先拉取再同步" : "同步失败";
+  }
+};
+
+// Auto-load cloud on start if newer
+(async () => {
+  try {
+    const data = await fetchCloud();
+    const localRaw = localStorage.getItem(KEY);
+    const local = localRaw ? JSON.parse(localRaw) : null;
+    const localTime = local && local.savedAt ? local.savedAt : 0;
+    if (data && data.savedAt && data.savedAt > localTime && Array.isArray(data.lots)) {
+      localStorage.setItem(KEY, JSON.stringify({ lots: data.lots, savedAt: data.savedAt }));
+      lots = data.lots;
+      render();
+      drawChart();
+      document.getElementById("syncStatus").textContent = "已自动加载云端较新数据";
+    } else {
+      document.getElementById("syncStatus").textContent = getToken() ? "Token 已就绪" : "未设置 Token（仅本机可用）";
+    }
+  } catch {}
+})();
 document.getElementById("undo").onclick = () => {
   const prev = localStorage.getItem(KEY+"-prev");
   if (!prev) { document.getElementById("status").textContent = "没有上一版"; return; }
