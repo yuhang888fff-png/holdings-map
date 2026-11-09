@@ -16,8 +16,8 @@
       "type": "stock",
       "shares": 140,
       "cost": 10800,
-      "price": 65.92,
-      "prev": 67.56
+      "price": 66.41,
+      "prev": 67.55
     },
     {
       "id": "rklb",
@@ -26,8 +26,8 @@
       "type": "stock",
       "shares": 58.434,
       "cost": 3750,
-      "price": 53.41,
-      "prev": 53.46
+      "price": 54.19,
+      "prev": 53.5
     },
     {
       "id": "otc",
@@ -43,10 +43,10 @@
       "name": "SpaceX",
       "ticker": "SPCX",
       "type": "stock",
-      "shares": 18.681,
-      "cost": 2625,
-      "price": 136.52,
-      "prev": 135.16
+      "shares": 21.414,
+      "cost": 3000,
+      "price": 138.06,
+      "prev": 135.44
     },
     {
       "id": "goog",
@@ -55,10 +55,10 @@
       "type": "stock",
       "shares": 20.769,
       "cost": 6000,
-      "price": 289.57,
-      "prev": 285.23
+      "price": 293.61,
+      "prev": 285.42
     }
   ],
-  "savedAt": 1794223786948,
+  "savedAt": 1794229804098,
   "version": 1
 }
