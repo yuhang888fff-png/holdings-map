@@ -550,7 +550,12 @@ document.getElementById("ranges").onclick = (e) => {
 };
 async function klines(ticker, interval, limit) {
   const t = ticker.toUpperCase().replace(/USDT$/, "");
-  const pairs = t.endsWith("B") ? [t + "USDT"] : [t + "BUSDT", t + "USDT"];
+  const candidates = [];
+  if (t === "GOOG") candidates.push("GOOGLBUSDT");
+  candidates.push(t + "BUSDT");
+  if (t.endsWith("B")) candidates.push(t + "USDT");
+  else candidates.push(t + "BBUSDT");
+  const pairs = [...new Set(candidates)];
   const hosts = [
     "https://data-api.binance.vision",
     "https://www.binance.com"
@@ -559,7 +564,7 @@ async function klines(ticker, interval, limit) {
     for (const host of hosts) {
       for (let attempt = 0; attempt < 2; attempt++) {
         const ctrl = new AbortController();
-        const stop = setTimeout(() => ctrl.abort(), 12000);
+        const stop = setTimeout(() => ctrl.abort(), 10000);
         try {
           const r = await fetch(host + "/api/v3/klines?symbol=" + pair + "&interval=" + interval + "&limit=" + limit, { signal: ctrl.signal });
           if (r.ok) {
