@@ -333,9 +333,17 @@ function getToken() { return localStorage.getItem("holdings-gh-token") || ""; }
 function setToken(t) { if (t) localStorage.setItem("holdings-gh-token", t); else localStorage.removeItem("holdings-gh-token"); }
 
 async function fetchCloud() {
-  const r = await fetch(RAW_URL + "?t=" + Date.now());
-  if (!r.ok) throw new Error("fetch failed");
-  return await r.json();
+  const token = getToken();
+  const headers = { Accept: "application/vnd.github.raw", "X-GitHub-Api-Version": "2022-11-28" };
+  if (token) headers.Authorization = "Bearer " + token;
+  const api = "https://api.github.com/repos/" + GH_OWNER + "/" + GH_REPO + "/contents/" + DATA_FILE + "?ref=main&t=" + Date.now();
+  const r = await fetch(api, { headers, cache: "no-store" });
+  if (r.ok) return await r.json();
+  const r2 = await fetch(RAW_URL + "?t=" + Date.now(), { cache: "no-store" });
+  if (!r2.ok) throw new Error("fetch failed");
+  const data = await r2.json();
+  data._fromRawCache = true;
+  return data;
 }
 
 async function getFileSha(token) {
@@ -372,17 +380,25 @@ document.getElementById("pullCloud").onclick = async () => {
   status.textContent = "正在拉取…";
   try {
     const data = await fetchCloud();
-    if (data && Array.isArray(data.lots) && data.lots.length) {
-      const prev = localStorage.getItem(KEY);
-      if (prev) localStorage.setItem(KEY + "-prev", prev);
-      localStorage.setItem(KEY, JSON.stringify({ lots: data.lots, savedAt: data.savedAt || Date.now() }));
-      lots = data.lots;
-      render();
-      drawChart();
-      status.textContent = "已从云端拉取 " + new Date(data.savedAt || Date.now()).toLocaleString("zh-CN", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
-    } else {
+    if (!(data && Array.isArray(data.lots) && data.lots.length)) {
       status.textContent = "云端数据无效";
+      return;
     }
+    const fmt = (t) => new Date(t).toLocaleString("zh-CN", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    let localTime = 0;
+    try { localTime = JSON.parse(localStorage.getItem(KEY) || "{}").savedAt || 0; } catch {}
+    const cloudTime = data.savedAt || 0;
+    if (localTime > cloudTime + 1500) {
+      const ok = confirm("云端是 " + fmt(cloudTime) + "，比本机 " + fmt(localTime) + " 旧。确定用云端覆盖本机？");
+      if (!ok) { status.textContent = "已取消，本机 " + fmt(localTime) + " 未改"; return; }
+    }
+    const prev = localStorage.getItem(KEY);
+    if (prev) localStorage.setItem(KEY + "-prev", prev);
+    localStorage.setItem(KEY, JSON.stringify({ lots: data.lots, savedAt: cloudTime || Date.now() }));
+    lots = data.lots;
+    render();
+    drawChart();
+    status.textContent = "已从云端拉取 " + fmt(cloudTime || Date.now()) + (data._fromRawCache ? "（可能延迟几分钟）" : "");
   } catch (e) {
     status.textContent = "拉取失败";
   }
@@ -397,7 +413,7 @@ document.getElementById("syncNow").onclick = async () => {
   try {
     await pushToCloud(token, payload);
     localStorage.setItem(KEY, JSON.stringify({ lots, savedAt: payload.savedAt }));
-    status.textContent = "已同步到云端 " + new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
+    status.textContent = "已同步到云端 " + new Date(payload.savedAt).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   } catch (e) {
     status.textContent = e.message === "conflict" ? "云端有更新，请先拉取再同步" : "同步失败";
   }
