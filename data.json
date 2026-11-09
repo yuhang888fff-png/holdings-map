@@ -16,8 +16,8 @@
       "type": "stock",
       "shares": 140,
       "cost": 10800,
-      "price": 66.15,
-      "prev": 67.65
+      "price": 68.7,
+      "prev": 67.58
     },
     {
       "id": "rklb",
@@ -26,8 +26,8 @@
       "type": "stock",
       "shares": 58.434,
       "cost": 3750,
-      "price": 53.96,
-      "prev": 53.59
+      "price": 58.27,
+      "prev": 53.52
     },
     {
       "id": "otc",
@@ -45,20 +45,20 @@
       "type": "stock",
       "shares": 21.414,
       "cost": 3000,
-      "price": 137.58,
-      "prev": 135.53
+      "price": 142.08,
+      "prev": 135.22
     },
     {
       "id": "goog",
       "name": "谷歌",
       "ticker": "GOOG",
       "type": "stock",
-      "shares": 20.769,
+      "shares": 20.774,
       "cost": 6000,
-      "price": 293.51,
-      "prev": 285.43
+      "price": 294.17,
+      "prev": 285.03
     }
   ],
-  "savedAt": 1794229840562,
+  "savedAt": 1794238228321,
   "version": 1
 }
