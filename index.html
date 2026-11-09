@@ -428,6 +428,7 @@ document.getElementById("save").onclick = () => {
   localStorage.setItem(KEY, JSON.stringify({ lots, savedAt }));
   document.getElementById("status").textContent = "已保存仓位 " + new Date(savedAt).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
 };
+document.getElementById("undo").onclick = () => {
   const prev = localStorage.getItem(KEY+"-prev");
   if (!prev) { document.getElementById("status").textContent = "没有上一版"; return; }
   localStorage.setItem(KEY, prev);
