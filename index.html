@@ -152,6 +152,11 @@ const SEED = [
   {id:"spcx",name:"SpaceX",ticker:"SPCX",type:"stock",shares:15.777,cost:2250,price:123.73},
   {id:"goog",name:"谷歌",ticker:"GOOG",type:"stock",shares:7.777,cost:2250,price:283.69}
 ];
+let baseSavedAt = 0;
+let dirty = false;
+let fromSeed = false;
+let syncing = false;
+let dataGen = 0;
 let lots = load();
 let showEmpty = false;
 let focus = "";
@@ -164,9 +169,28 @@ function load() {
   try {
     const raw = localStorage.getItem(KEY);
     const data = raw ? JSON.parse(raw) : null;
-    if (data && Array.isArray(data.lots) && data.lots.length && costOf(data.lots) > 0) return data.lots;
+    if (data && Array.isArray(data.lots)) {
+      baseSavedAt = Number(data.savedAt) || 0;
+      fromSeed = false;
+      dirty = false;
+      dataGen++;
+      return data.lots;
+    }
   } catch {}
+  baseSavedAt = 0;
+  fromSeed = true;
+  dirty = false;
+  dataGen++;
   return SEED.map(x => ({...x}));
+}
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, function (c) {
+    if (c === "&") return "&" + "amp;";
+    if (c === "<") return "&" + "lt;";
+    if (c === ">") return "&" + "gt;";
+    if (c === "\"") return "&" + "quot;";
+    return "&" + "#39;";
+  });
 }
 function money(n) { return Number(n||0).toLocaleString("zh-CN", {maximumFractionDigits:2}); }
 function mv(l) {
@@ -205,7 +229,7 @@ function render() {
 
   const positions = lots.map(l => ({l, v: mv(l)})).filter(x => x.v > 0.5).sort((a,b)=>b.v-a.v);
   const top1 = positions[0] ? positions[0].v / t.value * 100 : 0;
-  const top3 = positions.slice(0,3).reduce((a,b)=>a+b.v,0) / t.value * 100;
+  const top3 = t.value ? positions.slice(0,3).reduce((a,b)=>a+b.v,0) / t.value * 100 : 0;
   const maxNonCash = positions.filter(x=>x.l.type!=="cash")[0];
   const maxNonCashPct = maxNonCash ? maxNonCash.v / t.value * 100 : 0;
 
@@ -227,7 +251,7 @@ function render() {
   const tmItems = positions.map((p, i) => {
     const pctv = p.v / totalV * 100;
     const flex = Math.max(pctv, 3);
-    return `<div class="tm-item" style="flex:${flex} 1 ${flex}%; background:${COLORS[i % COLORS.length]}; min-width:${Math.max(pctv * 1.5, 48)}px" title="${p.l.name} ${share(p.v, totalV)}">${p.l.name}<br>${share(p.v, totalV)}</div>`;
+    return `<div class="tm-item" style="flex:${flex} 1 ${flex}%; background:${COLORS[i % COLORS.length]}; min-width:${Math.max(pctv * 1.5, 48)}px" title="${esc(p.l.name)} ${share(p.v, totalV)}">${esc(p.l.name)}<br>${share(p.v, totalV)}</div>`;
   }).join("");
   document.getElementById("treemap").innerHTML = `<h3>仓位面积图 · 方块大小 = 市值占比</h3><div class="treemap-box">${tmItems}</div>`;
 
@@ -248,8 +272,8 @@ function render() {
     donut += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${s.color}" stroke-width="${stroke}" stroke-dasharray="${len} ${circ-len}" stroke-dashoffset="${offset}" stroke-linecap="butt" transform="rotate(-90 ${cx} ${cy})"/>`;
   });
   donut += `<text x="${cx}" y="${cy-4}" text-anchor="middle" font-size="13" font-weight="600" fill="var(--ink)">${money(t.value)}</text><text x="${cx}" y="${cy+12}" text-anchor="middle" font-size="10" fill="var(--muted)">总市值</text></svg>`;
-  const legend = segs.map(s => `<div class="legend-item"><span><span class="swatch" style="background:${s.color}"></span>${s.l.name}</span><span>${share(s.v, totalV)}</span></div>`).join("");
-  document.getElementById("alloc").innerHTML = `<div class="alloc-row">${donut}<div class="legend">${legend}</div></div><div class="conc">前1大 ${top1.toFixed(1)}% · 前3大 ${top3.toFixed(1)}% · 最大非现金 ${maxNonCash ? maxNonCash.l.name + " " + maxNonCashPct.toFixed(1) + "%" : "—"}</div>`;
+  const legend = segs.map(s => `<div class="legend-item"><span><span class="swatch" style="background:${s.color}"></span>${esc(s.l.name)}</span><span>${share(s.v, totalV)}</span></div>`).join("");
+  document.getElementById("alloc").innerHTML = `<div class="alloc-row">${donut}<div class="legend">${legend}</div></div><div class="conc">前1大 ${top1.toFixed(1)}% · 前3大 ${top3.toFixed(1)}% · 最大非现金 ${maxNonCash ? esc(maxNonCash.l.name) + " " + maxNonCashPct.toFixed(1) + "%" : "—"}</div>`;
 
   const sortedLots = lots.map((l, i) => ({l, i, v: mv(l)})).sort((a, b) => b.v - a.v);
   document.getElementById("lots").innerHTML = sortedLots.map(({l, i}) => {
@@ -262,7 +286,7 @@ function render() {
     const costPct = Number(l.cost) > 0 ? " " + pct(p / Number(l.cost) * 100) : "";
     const del = l.type === "cash" ? "" : `<button class="del" data-del="${i}">删除</button>`;
     return `<div class="card">
-      <div class="row"><div><div class="name click" data-focus="${l.ticker||""}">${l.name}</div><div class="ticker">${l.ticker}</div></div>
+      <div class="row"><div><div class="name click" data-focus="${esc(l.ticker||"")}">${esc(l.name)}</div><div class="ticker">${esc(l.ticker)}</div></div>
       <div class="mv ${cls}">${money(v)} U<div style="font-size:12px">${p>=0?"+":""}${money(p)}${costPct}</div>${dayTxt}${del}</div></div>
       <div class="grid">
         <label>股数<input data-i="${i}" data-k="shares" value="${l.shares}" inputmode="decimal"></label>
@@ -296,12 +320,17 @@ function render() {
       if (lots[i].type === "cash" && (k==="shares"||k==="cost")) {
         lots[i].shares = n; lots[i].cost = n; lots[i].price = 1;
       }
+      dirty = true;
       render();
     });
   });
   document.querySelectorAll("button[data-del]").forEach(el => {
     el.addEventListener("click", () => {
-      lots.splice(Number(el.dataset.del), 1);
+      const i = Number(el.dataset.del);
+      const name = lots[i] ? lots[i].name : "";
+      if (!confirm("删除 " + name + " ？还没点保存之前，可以点刷新还原")) return;
+      lots.splice(i, 1);
+      dirty = true;
       render();
       drawChart();
     });
@@ -312,6 +341,7 @@ document.getElementById("add").onclick = () => {
   if (!ticker) return;
   const name = NAMES[ticker] || prompt("名称，比如 Circle") || ticker;
   lots.push({id:ticker.toLowerCase()+Date.now(), name, ticker, type:"stock", shares:0, cost:0, price:0});
+  dirty = true;
   render();
   refreshQuotes();
 };
@@ -346,22 +376,33 @@ async function fetchCloud() {
   return data;
 }
 
-async function getFileSha(token) {
-  const r = await fetch("https://api.github.com/repos/" + GH_OWNER + "/" + GH_REPO + "/contents/" + DATA_FILE, {
-    headers: { Authorization: "Bearer " + token, Accept: "application/vnd.github+json" }
+async function getCloudFile(token) {
+  const r = await fetch("https://api.github.com/repos/" + GH_OWNER + "/" + GH_REPO + "/contents/" + DATA_FILE + "?t=" + Date.now(), {
+    headers: { Authorization: "Bearer " + token, Accept: "application/vnd.github+json" },
+    cache: "no-store"
   });
   if (!r.ok) throw new Error("sha fetch failed");
   const d = await r.json();
-  return d.sha;
+  let savedAt = 0;
+  let ok = false;
+  try {
+    const text = decodeURIComponent(escape(atob(String(d.content || "").replace(/\n/g, ""))));
+    const parsed = JSON.parse(text);
+    savedAt = Number(parsed.savedAt) || 0;
+    ok = Array.isArray(parsed.lots);
+  } catch {}
+  if (!d.sha || !ok) throw new Error("push failed");
+  return { sha: d.sha, savedAt };
 }
 
 async function pushToCloud(token, payload) {
-  const sha = await getFileSha(token);
+  const meta = await getCloudFile(token);
+  if (meta.savedAt > baseSavedAt + 1500) throw new Error("conflict");
   const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
   const r = await fetch("https://api.github.com/repos/" + GH_OWNER + "/" + GH_REPO + "/contents/" + DATA_FILE, {
     method: "PUT",
     headers: { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "Content-Type": "application/json" },
-    body: JSON.stringify({ message: "update holdings", content, sha })
+    body: JSON.stringify({ message: "update holdings", content, sha: meta.sha })
   });
   if (r.status === 409) throw new Error("conflict");
   if (!r.ok) throw new Error("push failed");
@@ -388,14 +429,19 @@ document.getElementById("pullCloud").onclick = async () => {
     let localTime = 0;
     try { localTime = JSON.parse(localStorage.getItem(KEY) || "{}").savedAt || 0; } catch {}
     const cloudTime = data.savedAt || 0;
-    if (localTime > cloudTime + 1500) {
-      const ok = confirm("云端是 " + fmt(cloudTime) + "，比本机 " + fmt(localTime) + " 旧。确定用云端覆盖本机？");
-      if (!ok) { status.textContent = "已取消，本机 " + fmt(localTime) + " 未改"; return; }
+    const unpublished = dirty || localTime > baseSavedAt + 1500;
+    if (unpublished) {
+      const ok = confirm("本机有还没同步的修改，拉取会盖掉这些修改。确定用云端覆盖？");
+      if (!ok) { status.textContent = "已取消，本机未改"; return; }
     }
     const prev = localStorage.getItem(KEY);
     if (prev) localStorage.setItem(KEY + "-prev", prev);
     localStorage.setItem(KEY, JSON.stringify({ lots: data.lots, savedAt: cloudTime || Date.now() }));
     lots = data.lots;
+    baseSavedAt = cloudTime || 0;
+    dirty = false;
+    fromSeed = false;
+    dataGen++;
     render();
     drawChart();
     status.textContent = "已从云端拉取 " + fmt(cloudTime || Date.now()) + (data._fromRawCache ? "（可能延迟几分钟）" : "");
@@ -408,14 +454,25 @@ document.getElementById("syncNow").onclick = async () => {
   const token = getToken();
   const status = document.getElementById("syncStatus");
   if (!token) { status.textContent = "请先保存 Token"; return; }
+  if (syncing) return;
+  if (fromSeed) {
+    const ok = confirm("这台设备还没有自己的仓位，当前是初始示例。同步会覆盖云端。确定？");
+    if (!ok) { status.textContent = "已取消"; return; }
+  }
+  syncing = true;
   status.textContent = "正在同步…";
   const payload = { lots, savedAt: Date.now(), version: 1 };
   try {
     await pushToCloud(token, payload);
     localStorage.setItem(KEY, JSON.stringify({ lots, savedAt: payload.savedAt }));
+    baseSavedAt = payload.savedAt;
+    dirty = false;
+    fromSeed = false;
     status.textContent = "已同步到云端 " + new Date(payload.savedAt).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   } catch (e) {
     status.textContent = e.message === "conflict" ? "云端有更新，请先拉取再同步" : "同步失败";
+  } finally {
+    syncing = false;
   }
 };
 
@@ -426,9 +483,19 @@ document.getElementById("syncNow").onclick = async () => {
     const localRaw = localStorage.getItem(KEY);
     const local = localRaw ? JSON.parse(localRaw) : null;
     const localTime = local && local.savedAt ? local.savedAt : 0;
+    if (dirty || localTime > baseSavedAt + 1500) {
+      document.getElementById("syncStatus").textContent = "有未同步修改，未用云端覆盖";
+      return;
+    }
     if (data && data.savedAt && data.savedAt > localTime && Array.isArray(data.lots)) {
+      const prev = localStorage.getItem(KEY);
+      if (prev) localStorage.setItem(KEY + "-prev", prev);
       localStorage.setItem(KEY, JSON.stringify({ lots: data.lots, savedAt: data.savedAt }));
       lots = data.lots;
+      baseSavedAt = data.savedAt;
+      dirty = false;
+      fromSeed = false;
+      dataGen++;
       render();
       drawChart();
       document.getElementById("syncStatus").textContent = "已自动加载云端较新数据";
@@ -442,6 +509,7 @@ document.getElementById("save").onclick = () => {
   if (prev) localStorage.setItem(KEY + "-prev", prev);
   const savedAt = Date.now();
   localStorage.setItem(KEY, JSON.stringify({ lots, savedAt }));
+  dirty = false;
   document.getElementById("status").textContent = "已保存仓位 " + new Date(savedAt).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
 };
 document.getElementById("undo").onclick = () => {
@@ -470,6 +538,9 @@ document.getElementById("importFile").onchange = (e) => {
       const data = JSON.parse(r.result);
       if (data && Array.isArray(data.lots)) {
         lots = data.lots;
+        dirty = true;
+        fromSeed = false;
+        dataGen++;
         render();
         drawChart();
         document.getElementById("status").textContent = "已导入，点保存才记住";
@@ -524,12 +595,14 @@ let pulling = false;
 async function refreshQuotes() {
   if (pulling) return;
   pulling = true;
+  const gen = dataGen;
   const btn = document.getElementById("quotes");
   const status = document.getElementById("status");
   btn.textContent = "正在拉…";
   try {
     const stocks = lots.filter(l => l.type === "stock" && l.ticker);
     const quotes = await Promise.all(stocks.map(l => quoteOf(l.ticker)));
+    if (gen !== dataGen) return;
     let n = 0;
     stocks.forEach((l, i) => {
       if (quotes[i].price) { l.price = quotes[i].price; n++; }
@@ -539,10 +612,14 @@ async function refreshQuotes() {
     status.textContent = n ? "币安现价 " + now + "，点保存才记住" : "没拉到币安价，还是上次价格";
     recordSnap();
   } catch {
-    status.textContent = "拉价失败，还是上次价格";
+    if (gen === dataGen) status.textContent = "拉价失败，还是上次价格";
   } finally {
     btn.textContent = "拉取币安现价";
     pulling = false;
+    if (gen !== dataGen) {
+      if (status.textContent === "正在拉…") status.textContent = "";
+      return;
+    }
     render();
     drawChart();
   }

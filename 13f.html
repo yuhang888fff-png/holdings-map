@@ -46,100 +46,80 @@
   <div class="header">
     <h1>个人持仓披露</h1>
     <div class="sub">Personal Holdings Report · 13F-Style Information Table</div>
-    <div class="sub" style="margin-top:4px">报告期：2026-11-05 · 按现价</div>
+    <div class="sub" id="asof" style="margin-top:4px">读取本机已保存的仓位</div>
   </div>
-
-  <div class="meta">
-    <div><b>报告人</b>Hang Yu / 航宇</div>
-    <div><b>报告类型</b>个人持仓披露（非监管文件）</div>
-    <div><b>总市值</b>42,122.61 U</div>
-    <div><b>持仓数量</b>6 项（含现金）</div>
-  </div>
-
-  <div class="summary">
-    <h2>汇总</h2>
-    <div class="sum-grid">
-      <div><b>42,122.61</b><span>总市值 U</span></div>
-      <div><b>22,150</b><span>现金 U（52.6%）</span></div>
-      <div><b>19,972.61</b><span>非现金仓位（47.4%）</span></div>
-    </div>
-    <div class="note">说明：13F 主要披露美国上市权益证券。本页按同样表格结构列出全部持仓（含现金与场外基金），仅供个人查看，不是正式 SEC 申报。</div>
-  </div>
-
-  <table>
-    <thead>
-      <tr>
-        <th>发行人</th>
-        <th>类别</th>
-        <th class="right">市值 U</th>
-        <th class="right">股数 / 金额</th>
-        <th class="right">占比</th>
-        <th class="right">成本 U</th>
-        <th class="right">浮动盈亏</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>现金 U<br><span class="ticker">USDT · CASH</span></td>
-        <td>现金</td>
-        <td class="right">22,150.00</td>
-        <td class="right">22,150</td>
-        <td class="right">52.58%</td>
-        <td class="right">22,150</td>
-        <td class="right">+0.00</td>
-      </tr>
-      <tr>
-        <td>Circle<br><span class="ticker">CRCL · COM</span></td>
-        <td>普通股</td>
-        <td class="right">9,371.60</td>
-        <td class="right">140 SH</td>
-        <td class="right">22.25%</td>
-        <td class="right">10,800</td>
-        <td class="right down">-1,428.40</td>
-      </tr>
-      <tr>
-        <td>场外基金<br><span class="ticker">OTC · FUND</span></td>
-        <td>场外基金</td>
-        <td class="right">3,800.00</td>
-        <td class="right">—</td>
-        <td class="right">9.02%</td>
-        <td class="right">3,800</td>
-        <td class="right">+0.00</td>
-      </tr>
-      <tr>
-        <td>Rocket Lab<br><span class="ticker">RKLB · COM</span></td>
-        <td>普通股</td>
-        <td class="right">2,642.66</td>
-        <td class="right">57.7 SH</td>
-        <td class="right">6.27%</td>
-        <td class="right">3,750</td>
-        <td class="right down">-1,107.34</td>
-      </tr>
-      <tr>
-        <td>Alphabet<br><span class="ticker">GOOG · COM</span></td>
-        <td>普通股</td>
-        <td class="right">2,206.26</td>
-        <td class="right">7.777 SH</td>
-        <td class="right">5.24%</td>
-        <td class="right">2,250</td>
-        <td class="right down">-43.74</td>
-      </tr>
-      <tr>
-        <td>SpaceX<br><span class="ticker">SPCX · COM</span></td>
-        <td>普通股</td>
-        <td class="right">1,952.09</td>
-        <td class="right">15.777 SH</td>
-        <td class="right">4.63%</td>
-        <td class="right">2,250</td>
-        <td class="right down">-297.91</td>
-      </tr>
-    </tbody>
-  </table>
-
+  <div id="report"></div>
   <div class="footer">
-    数据来源：个人持仓地图截图（2026-11-05）。市值按现价计算。本页仅个人使用，不构成任何投资建议或正式监管披露。<br>
-    返回 <a href="/holdings-map/?v=10" style="color:#c99a08">持仓地图</a> · <a href="13f.html" style="color:#c99a08">本页</a>
+    数据来自本机已保存的持仓，和持仓地图同一份。只显示点过「保存仓位」或同步之后的数据，未保存的改动不会出现在这里。<br>
+    返回 <a href="index.html" style="color:#c99a08">持仓地图</a>
   </div>
 </main>
+<script>
+const KEY = "holdings-map-phone-v5";
+function money(n) { return Number(n || 0).toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, function (c) {
+    if (c === "&") return "&" + "amp;";
+    if (c === "<") return "&" + "lt;";
+    if (c === ">") return "&" + "gt;";
+    if (c === '"') return "&" + "quot;";
+    return "&" + "#39;";
+  });
+}
+function mv(l) {
+  if (l.type === "cash") return Number(l.shares) || Number(l.cost) || 0;
+  if (Number(l.shares) > 0 && Number(l.price) > 0) return Number(l.shares) * Number(l.price);
+  return Number(l.cost) || 0;
+}
+function kind(l) {
+  if (l.type === "cash") return "现金";
+  if (l.type === "fund") return "场外基金";
+  return "普通股";
+}
+let data = null;
+try { data = JSON.parse(localStorage.getItem(KEY) || "null"); } catch {}
+const box = document.getElementById("report");
+if (!data || !Array.isArray(data.lots) || !data.lots.length) {
+  box.innerHTML = '<div class="summary">这台设备还没有已保存的仓位。先打开持仓地图，确认数据后点「保存仓位」。</div>';
+} else {
+  const lots = data.lots;
+  const rows = lots.map(l => ({ l, v: mv(l) })).sort((a, b) => b.v - a.v);
+  const total = rows.reduce((a, b) => a + b.v, 0) || 1;
+  const cash = rows.filter(x => x.l.type === "cash").reduce((a, b) => a + b.v, 0);
+  const when = data.savedAt ? new Date(data.savedAt).toLocaleString("zh-CN", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "未知";
+  document.getElementById("asof").textContent = "报告时点：" + when + " · 按已保存现价";
+  const body = rows.map(x => {
+    const p = x.v - Number(x.l.cost || 0);
+    const cls = p < -0.005 ? "down" : p > 0.005 ? "up" : "";
+    const sh = x.l.type === "cash" ? money(x.v).replace(/\.00$/, "") : (Number(x.l.shares) > 0 ? x.l.shares + " SH" : "—");
+    return `<tr>
+      <td>${esc(x.l.name)}<br><span class="ticker">${esc(x.l.ticker)} · ${x.l.type === "cash" ? "CASH" : x.l.type === "fund" ? "FUND" : "COM"}</span></td>
+      <td>${kind(x.l)}</td>
+      <td class="right">${money(x.v)}</td>
+      <td class="right">${esc(sh)}</td>
+      <td class="right">${(x.v / total * 100).toFixed(2)}%</td>
+      <td class="right">${money(x.l.cost || 0)}</td>
+      <td class="right ${cls}">${p >= 0 ? "+" : ""}${money(p)}</td>
+    </tr>`;
+  }).join("");
+  box.innerHTML = `
+    <div class="summary">
+      <h2>汇总</h2>
+      <div class="sum-grid">
+        <div><b>${money(total === 1 && rows.every(x => x.v === 0) ? 0 : rows.reduce((a,b)=>a+b.v,0))}</b><span>总市值 U</span></div>
+        <div><b>${money(cash)}</b><span>现金 U（${(cash / total * 100).toFixed(1)}%）</span></div>
+        <div><b>${money(rows.reduce((a,b)=>a+b.v,0) - cash)}</b><span>非现金仓位（${((rows.reduce((a,b)=>a+b.v,0) - cash) / total * 100).toFixed(1)}%）</span></div>
+      </div>
+      <div class="note">说明：13F 主要披露美国上市权益证券。本页按同样表格结构列出全部持仓（含现金与场外基金），仅供个人查看，不是正式 SEC 申报。</div>
+    </div>
+    <table>
+      <thead><tr>
+        <th>发行人</th><th>类别</th><th class="right">市值 U</th><th class="right">股数 / 金额</th>
+        <th class="right">占比</th><th class="right">成本 U</th><th class="right">浮动盈亏</th>
+      </tr></thead>
+      <tbody>${body}</tbody>
+    </table>`;
+}
+</script>
 </body>
 </html>
