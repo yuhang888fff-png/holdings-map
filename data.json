@@ -5,8 +5,8 @@
       "name": "现金 U",
       "ticker": "USDT",
       "type": "cash",
-      "shares": 20100,
-      "cost": 20100,
+      "shares": 20275,
+      "cost": 20275,
       "price": 1
     },
     {
@@ -59,6 +59,6 @@
       "prev": 291.42
     }
   ],
-  "savedAt": 1794214637952,
+  "savedAt": 1794214669694,
   "version": 1
 }
