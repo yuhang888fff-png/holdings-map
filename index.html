@@ -421,7 +421,13 @@ document.getElementById("syncNow").onclick = async () => {
     }
   } catch {}
 })();
-document.getElementById("undo").onclick = () => {
+document.getElementById("save").onclick = () => {
+  const prev = localStorage.getItem(KEY);
+  if (prev) localStorage.setItem(KEY + "-prev", prev);
+  const savedAt = Date.now();
+  localStorage.setItem(KEY, JSON.stringify({ lots, savedAt }));
+  document.getElementById("status").textContent = "已保存仓位 " + new Date(savedAt).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
+};
   const prev = localStorage.getItem(KEY+"-prev");
   if (!prev) { document.getElementById("status").textContent = "没有上一版"; return; }
   localStorage.setItem(KEY, prev);
