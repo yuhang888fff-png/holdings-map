@@ -5,8 +5,8 @@
       "name": "现金 U",
       "ticker": "USDT",
       "type": "cash",
-      "shares": 20275,
-      "cost": 20275,
+      "shares": 18025,
+      "cost": 18025,
       "price": 1
     },
     {
@@ -16,8 +16,8 @@
       "type": "stock",
       "shares": 140,
       "cost": 10800,
-      "price": 69.47,
-      "prev": 75.52
+      "price": 65.92,
+      "prev": 67.56
     },
     {
       "id": "rklb",
@@ -26,8 +26,8 @@
       "type": "stock",
       "shares": 58.434,
       "cost": 3750,
-      "price": 48.58,
-      "prev": 52.09
+      "price": 53.41,
+      "prev": 53.46
     },
     {
       "id": "otc",
@@ -45,20 +45,20 @@
       "type": "stock",
       "shares": 18.681,
       "cost": 2625,
-      "price": 128.54,
-      "prev": 134.58
+      "price": 136.52,
+      "prev": 135.16
     },
     {
       "id": "goog",
       "name": "谷歌",
       "ticker": "GOOG",
       "type": "stock",
-      "shares": 12.998,
-      "cost": 3750,
-      "price": 285.2,
-      "prev": 291.42
+      "shares": 20.769,
+      "cost": 6000,
+      "price": 289.57,
+      "prev": 285.23
     }
   ],
-  "savedAt": 1794214669694,
+  "savedAt": 1794223786948,
   "version": 1
 }
