@@ -14,20 +14,20 @@
       "name": "Circle",
       "ticker": "CRCL",
       "type": "stock",
-      "shares": 134.328,
-      "cost": 10425,
-      "price": 66.17,
-      "prev": 66.15
+      "shares": 128.588,
+      "cost": 10050,
+      "price": 66.55,
+      "prev": 67.76
     },
     {
       "id": "rklb",
       "name": "Rocket Lab",
       "ticker": "RKLB",
       "type": "stock",
-      "shares": 64.914,
-      "cost": 4125,
-      "price": 58.18,
-      "prev": 53.96
+      "shares": 71.194,
+      "cost": 4500,
+      "price": 59,
+      "prev": 56.23
     },
     {
       "id": "otc",
@@ -45,8 +45,8 @@
       "type": "stock",
       "shares": 21.414,
       "cost": 3000,
-      "price": 140.58,
-      "prev": 138.42
+      "price": 144.2,
+      "prev": 140.98
     },
     {
       "id": "goog",
@@ -55,10 +55,10 @@
       "type": "stock",
       "shares": 20.774,
       "cost": 6000,
-      "price": 288.66,
-      "prev": 295.31
+      "price": 291.14,
+      "prev": 293.48
     }
   ],
-  "savedAt": 1794323156082,
+  "savedAt": 1794325046819,
   "version": 1
 }
