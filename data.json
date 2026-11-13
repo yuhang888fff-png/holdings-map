@@ -5,8 +5,8 @@
       "name": "现金 U",
       "ticker": "USDT",
       "type": "cash",
-      "shares": 17650,
-      "cost": 17650,
+      "shares": 18400,
+      "cost": 18400,
       "price": 1
     },
     {
@@ -16,18 +16,18 @@
       "type": "stock",
       "shares": 128.588,
       "cost": 10050,
-      "price": 65.8,
-      "prev": 68.22
+      "price": 62.66,
+      "prev": 65.91
     },
     {
       "id": "rklb",
       "name": "Rocket Lab",
       "ticker": "RKLB",
       "type": "stock",
-      "shares": 71.194,
-      "cost": 4500,
-      "price": 66.68,
-      "prev": 67.99
+      "shares": 59.574,
+      "cost": 3750,
+      "price": 64.46,
+      "prev": 64.43
     },
     {
       "id": "otc",
@@ -45,8 +45,8 @@
       "type": "stock",
       "shares": 21.414,
       "cost": 3000,
-      "price": 143.97,
-      "prev": 142.98
+      "price": 140.67,
+      "prev": 139.56
     },
     {
       "id": "goog",
@@ -55,10 +55,10 @@
       "type": "stock",
       "shares": 20.774,
       "cost": 6000,
-      "price": 299.97,
-      "prev": 291.55
+      "price": 300.92,
+      "prev": 294.85
     }
   ],
-  "savedAt": 1794499975012,
+  "savedAt": 1794540384217,
   "version": 1
 }
