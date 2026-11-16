@@ -92,8 +92,15 @@
   .pnl-banner small { display:block; margin-top:4px; color:var(--muted); font-size:12px; }
   .pnl-banner.up b { color:#0a9d62; }
   .pnl-banner.down b { color:var(--down); }
-  .kpi small.ytd.up, .pnl-banner small.ytd.up { color:#0a9d62; }
-  .kpi small.ytd.down, .pnl-banner small.ytd.down { color:var(--down); }
+  .pnl-banner .amt { display:block; margin-top:2px; font-size:16px; font-weight:650; font-variant-numeric:tabular-nums; }
+  .pnl-banner.up .amt { color:#0a9d62; }
+  .pnl-banner.down .amt { color:var(--down); }
+  .metric-pair { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px; }
+  .metric-pair span { font-size:11px; }
+  .metric-pair b { font-size:22px; margin-top:2px; }
+  .metric-pair b.up { color:#0a9d62; }
+  .metric-pair b.down { color:var(--down); }
+  .idx-row .kpi { text-align:center; }
 
   .treemap h3 { margin:0 0 10px; font-size:14px; font-weight:600; color:var(--ink); }
   .treemap-box { display:flex; flex-wrap:wrap; gap:4px; min-height:120px; }
@@ -136,10 +143,10 @@
   </div>
   <section class="treemap" id="treemap"></section>
   <div class="pnl-zone">
-    <section class="pnl-banner" id="totalPnl"><span>总仓位盈亏</span><b>—</b><small>盈亏 ÷ 总成本</small></section>
+    <section class="pnl-banner" id="totalPnl"><span>总仓位 · 今年来</span><b>—</b><small class="amt">—</small><small>按买入成本</small></section>
     <section class="idx-row" id="indexes">
-      <div class="kpi" id="idx-ndx"><span>纳斯达克</span><b>—</b><small>距高点</small></div>
-      <div class="kpi" id="idx-spx"><span>标普500</span><b>—</b><small>距高点</small></div>
+      <div class="kpi" id="idx-ndx"><span>纳斯达克</span><div class="metric-pair"><div><span>距高点</span><b>—</b></div><div><span>今年来</span><b>—</b></div></div></div>
+      <div class="kpi" id="idx-spx"><span>标普500</span><div class="metric-pair"><div><span>距高点</span><b>—</b></div><div><span>今年来</span><b>—</b></div></div></div>
     </section>
   </div>
   <section class="kpis" id="kpis"></section>
@@ -271,12 +278,9 @@ function render() {
     ["前3集中度", top3.toFixed(1)+"%", "前3大持仓合计", ""],
   ];
   const totalPct = t.cost ? t.pnl / t.cost * 100 : 0;
-  const ytd = ytdOfBook();
-  const yUp = ytd.pnl >= 0;
   const totalEl = document.getElementById("totalPnl");
   totalEl.className = "pnl-banner " + (t.pnl >= 0 ? "up" : "down");
-  const ytdLine = ytd.ok ? `<small class="ytd ${yUp?"up":"down"}">今年来 ${(yUp?"+":"")+money(ytd.pnl)} U · ${pct(ytd.pct)}</small>` : `<small>今年来 —</small>`;
-  totalEl.innerHTML = `<span>总仓位盈亏</span><b>${t.cost ? pct(totalPct) : "—"}</b><small>${(up?"+":"")+money(t.pnl)} U · 总成本 ${money(t.cost)} U</small>${ytdLine}`;
+  totalEl.innerHTML = `<span>总仓位 · 今年来</span><b>${t.cost ? pct(totalPct) : "—"}</b><small class="amt">${(up?"+":"")+money(t.pnl)} U</small><small>总成本 ${money(t.cost)} U · 按买入成本</small>`;
 
   document.getElementById("kpis").innerHTML = cards.map(([k,v,s,tone])=>`<div class="kpi ${tone}"><span>${k}</span><b>${v}</b><small>${s}</small></div>`).join("") + `<div class="cost-note">总成本 = 现金本金 + 股票/基金本金。浮动盈亏 = 现价市值 − 总成本。</div>`;
 
@@ -817,21 +821,7 @@ function applyTheme(dark) {
 themeBtn.onclick = () => applyTheme(!document.body.classList.contains("dark"));
 
 const YTD_YEAR = 2026;
-const YEAR_OPEN = { QQQ:614.31, SPY:681.92, CRCL:79.3, RKLB:69.76, GOOG:313, GOOGL:313, SPCX:150 };
-function ytdOfBook() {
-  if (new Date().getFullYear() !== YTD_YEAR) return { ok:false };
-  let start = 0;
-  lots.forEach(l => {
-    const shares = Number(l.shares);
-    const ticker = String(l.ticker || "").toUpperCase();
-    const base = YEAR_OPEN[ticker];
-    if (l.type === "stock" && shares > 0 && base > 0 && Number(l.price) > 0) start += shares * base;
-    else start += mv(l);
-  });
-  const now = lots.reduce((a,b)=>a+mv(b),0);
-  const pnl = now - start;
-  return { ok: start > 0, pnl, pct: start ? pnl / start * 100 : 0, start };
-}
+const YEAR_OPEN = { QQQ:614.31, SPY:681.92 };
 const INDEX_CARDS = [
   {id:"idx-ndx", name:"纳斯达克", pair:"QQQBUSDT", via:"QQQ"},
   {id:"idx-spx", name:"标普500", pair:"SPYBUSDT", via:"SPY"}
@@ -870,15 +860,17 @@ function paintIndex(row, data) {
   if (!el) return;
   if (!data) {
     el.className = "kpi";
-    el.innerHTML = `<span>${row.name}</span><b>—</b><small>行情没拉到</small>`;
+    el.innerHTML = `<span>${row.name}</span><div class="metric-pair"><div><span>距高点</span><b>—</b></div><div><span>今年来</span><b>—</b></div></div><small>行情没拉到</small>`;
     return;
   }
   const when = new Date(data.highT).toLocaleDateString("zh-CN", {month:"2-digit", day:"2-digit"});
   const base = new Date().getFullYear() === YTD_YEAR ? YEAR_OPEN[row.via] : 0;
   const ytd = base > 0 ? (data.last - base) / base * 100 : null;
-  const ytdHtml = ytd == null ? "" : `<small class="ytd ${ytd>=0?"up":"down"}">今年来 ${pct(ytd)}</small>`;
-  el.className = data.drop < -0.05 ? "kpi down" : "kpi";
-  el.innerHTML = `<span>${row.name}</span><b>${data.drop.toFixed(2)}%</b><small>现价 ${money(data.last)} · 高点 ${money(data.high)}（${when}）· ${row.via}</small>${ytdHtml}`;
+  const ytdCls = ytd == null ? "" : (ytd >= 0 ? "up" : "down");
+  const ytdTxt = ytd == null ? "—" : pct(ytd);
+  const dropCls = data.drop < -0.05 ? "down" : (data.drop > 0.05 ? "up" : "");
+  el.className = "kpi";
+  el.innerHTML = `<span>${row.name}</span><div class="metric-pair"><div><span>距高点</span><b class="${dropCls}">${data.drop.toFixed(2)}%</b></div><div><span>今年来</span><b class="${ytdCls}">${ytdTxt}</b></div></div><small>现价 ${money(data.last)} · 高点 ${money(data.high)}（${when}）</small>`;
 }
 async function loadIndexes() {
   await Promise.all(INDEX_CARDS.map(async (row) => paintIndex(row, await indexStats(row.pair))));
