@@ -90,6 +90,9 @@
   .treemap-box { display:flex; flex-wrap:wrap; gap:4px; min-height:120px; }
   .tm-item { display:flex; align-items:center; justify-content:center; border-radius:8px; color:#1e2329; font-size:12px; font-weight:600; text-align:center; padding:6px; overflow:hidden; line-height:1.2; }
   .cost-note { color:var(--muted); font-size:11.5px; margin:0; grid-column:1 / -1; padding:0 2px 4px; }
+  .idx-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:0 0 14px; }
+  .idx-row .kpi b { font-size:22px; }
+
 </style>
 </head>
 <body>
@@ -102,6 +105,10 @@
     <button class="theme-btn" id="theme">深色</button>
   </header>
   <p class="sub">改完可以先看数据。不保存就点「刷新」，会回到上次保存的仓位。 · <a href="13f.html" style="color:#c99a08">13F 披露</a></p>
+  <section class="idx-row" id="indexes">
+    <div class="kpi" id="idx-ndx"><span>纳斯达克</span><b>—</b><small>距高点</small></div>
+    <div class="kpi" id="idx-spx"><span>标普500</span><b>—</b><small>距高点</small></div>
+  </section>
   <div class="top-grid">
     <section class="chart-card">
       <div class="chart-high" id="chartHigh">—</div>
@@ -624,7 +631,7 @@ async function refreshQuotes() {
     drawChart();
   }
 }
-document.getElementById("quotes").onclick = refreshQuotes;
+document.getElementById("quotes").onclick = () => { refreshQuotes(); loadIndexes(); };
 const RANGES = [
   {id:"1d", label:"1天", interval:"1h", limit:24},
   {id:"7d", label:"7天", interval:"1h", limit:168},
@@ -781,10 +788,61 @@ function applyTheme(dark) {
   localStorage.setItem("holdings-theme", dark ? "dark" : "light");
 }
 themeBtn.onclick = () => applyTheme(!document.body.classList.contains("dark"));
+
+const INDEX_CARDS = [
+  {id:"idx-ndx", name:"纳斯达克", pair:"QQQBUSDT", via:"QQQ"},
+  {id:"idx-spx", name:"标普500", pair:"SPYBUSDT", via:"SPY"}
+];
+async function indexStats(pair) {
+  const hosts = ["https://data-api.binance.vision", "https://www.binance.com"];
+  for (const host of hosts) {
+    const ctrl = new AbortController();
+    const stop = setTimeout(() => ctrl.abort(), 10000);
+    try {
+      const [kl, tk] = await Promise.all([
+        fetch(host + "/api/v3/klines?symbol=" + pair + "&interval=1d&limit=1000", {signal: ctrl.signal}),
+        fetch(host + "/api/v3/ticker/24hr?symbol=" + pair, {signal: ctrl.signal})
+      ]);
+      if (!kl.ok || !tk.ok) continue;
+      const bars = await kl.json();
+      const tick = await tk.json();
+      if (!Array.isArray(bars) || !bars.length) continue;
+      let high = 0, highT = 0;
+      bars.forEach(x => {
+        const h = Number(x[2]);
+        if (h > high) { high = h; highT = Number(x[0]); }
+      });
+      const last = Number(tick && tick.lastPrice);
+      const dayHigh = Number(tick && tick.highPrice);
+      if (dayHigh > high) { high = dayHigh; highT = Date.now(); }
+      if (!(high > 0) || !(last > 0)) continue;
+      return {last, high, highT, drop: (last - high) / high * 100};
+    } catch {}
+    finally { clearTimeout(stop); }
+  }
+  return null;
+}
+function paintIndex(row, data) {
+  const el = document.getElementById(row.id);
+  if (!el) return;
+  if (!data) {
+    el.className = "kpi";
+    el.innerHTML = `<span>${row.name}</span><b>—</b><small>行情没拉到</small>`;
+    return;
+  }
+  const when = new Date(data.highT).toLocaleDateString("zh-CN", {month:"2-digit", day:"2-digit"});
+  el.className = data.drop < -0.05 ? "kpi down" : "kpi";
+  el.innerHTML = `<span>${row.name}</span><b>${data.drop.toFixed(2)}%</b><small>现价 ${money(data.last)} · 高点 ${money(data.high)}（${when}）· ${row.via}</small>`;
+}
+async function loadIndexes() {
+  await Promise.all(INDEX_CARDS.map(async (row) => paintIndex(row, await indexStats(row.pair))));
+}
+
 applyTheme(localStorage.getItem("holdings-theme") === "dark");
 
 render();
 refreshQuotes();
+loadIndexes();
 drawChart();
 </script>
 </body>
