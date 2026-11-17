@@ -5,8 +5,8 @@
       "name": "现金 U",
       "ticker": "USDT",
       "type": "cash",
-      "shares": 21025,
-      "cost": 21025,
+      "shares": 20650,
+      "cost": 20650,
       "price": 1
     },
     {
@@ -14,10 +14,10 @@
       "name": "Circle",
       "ticker": "CRCL",
       "type": "stock",
-      "shares": 134.977,
-      "cost": 10425,
-      "price": 58.16,
-      "prev": 58
+      "shares": 141.424,
+      "cost": 10800,
+      "price": 57.97,
+      "prev": 58.47
     },
     {
       "id": "rklb",
@@ -26,8 +26,8 @@
       "type": "stock",
       "shares": 46.924,
       "cost": 3000,
-      "price": 59.45,
-      "prev": 59.58
+      "price": 57.69,
+      "prev": 59.68
     },
     {
       "id": "otc",
@@ -45,8 +45,8 @@
       "type": "stock",
       "shares": 15.912,
       "cost": 2250,
-      "price": 137.19,
-      "prev": 138.77
+      "price": 138.25,
+      "prev": 140.02
     },
     {
       "id": "goog",
@@ -55,10 +55,10 @@
       "type": "stock",
       "shares": 15.621,
       "cost": 4500,
-      "price": 289.13,
-      "prev": 292.21
+      "price": 284.93,
+      "prev": 293.95
     }
   ],
-  "savedAt": 1794846895227,
+  "savedAt": 1794890817029,
   "version": 1
 }
