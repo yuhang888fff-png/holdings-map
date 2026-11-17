@@ -178,7 +178,7 @@
 <script>
 const KEY = "holdings-map-phone-v5";
 const SEED = [
-  {id:"usdt",name:"现金 U",ticker:"USDT",type:"cash",shares:22150,cost:22150,price:1},
+  {id:"usdt",name:"现金 USD",ticker:"USDT",type:"cash",shares:22150,cost:22150,price:1},
   {id:"crcl",name:"Circle",ticker:"CRCL",type:"stock",shares:140,cost:10800,price:66.94},
   {id:"rklb",name:"Rocket Lab",ticker:"RKLB",type:"stock",shares:57.7,cost:3750,price:45.8},
   {id:"otc",name:"场外基金",ticker:"OTC",type:"fund",shares:0,cost:3800,price:0},
@@ -191,6 +191,7 @@ let fromSeed = false;
 let syncing = false;
 let dataGen = 0;
 let lots = load();
+lots.forEach(l => { if (l.name === "现金 U") l.name = "现金 USD"; });
 let showEmpty = false;
 let focus = "";
 const NAMES = {CRCL:"Circle",RKLB:"Rocket Lab",PDD:"拼多多",DRAM:"Memory ETF",NVDA:"英伟达",TSLA:"特斯拉",AAPL:"苹果",ASTS:"AST SpaceMobile",QQQ:"纳指ETF",SPCX:"SpaceX",GOOG:"谷歌"};
@@ -267,20 +268,20 @@ function render() {
   const maxNonCashPct = maxNonCash ? maxNonCash.v / t.value * 100 : 0;
 
   const cards = [
-    ["总成本", money(t.cost)+" U", "含现金", "wide"],
-    ["总市值", money(t.value)+" U", "按现价", ""],
-    ["现金 U", money(t.cash)+" U", share(t.cash, t.value), ""],
-    ["非现金仓位", money(t.invested)+" U", share(t.invested, t.value), ""],
-    ["非现金仓位成本", money(t.investedCost)+" U", "股票和基金本金", ""],
-    ["浮动盈亏", (up?"+":"")+money(t.pnl)+" U", t.investedCost ? pct(t.pnl / t.investedCost * 100) : "—", up?"up":"down"],
-    ["今日盈亏", (dayUp?"+":"")+money(day)+" U", todayBase() ? pct(day / todayBase() * 100) : "拉现价后显示", dayUp?"up":"down"],
+    ["总成本", money(t.cost)+" USD", "含现金", "wide"],
+    ["总市值", money(t.value)+" USD", "按现价", ""],
+    ["现金 USD", money(t.cash)+" USD", share(t.cash, t.value), ""],
+    ["非现金仓位", money(t.invested)+" USD", share(t.invested, t.value), ""],
+    ["非现金仓位成本", money(t.investedCost)+" USD", "股票和基金本金", ""],
+    ["浮动盈亏", (up?"+":"")+money(t.pnl)+" USD", t.investedCost ? pct(t.pnl / t.investedCost * 100) : "—", up?"up":"down"],
+    ["今日盈亏", (dayUp?"+":"")+money(day)+" USD", todayBase() ? pct(day / todayBase() * 100) : "拉现价后显示", dayUp?"up":"down"],
     ["集中度", top1.toFixed(1)+"%", "前1大持仓", ""],
     ["前3集中度", top3.toFixed(1)+"%", "前3大持仓合计", ""],
   ];
   const totalPct = t.cost ? t.pnl / t.cost * 100 : 0;
   const totalEl = document.getElementById("totalPnl");
   totalEl.className = "pnl-banner " + (t.pnl >= 0 ? "up" : "down");
-  totalEl.innerHTML = `<span>总仓位 · 今年来</span><b>${t.cost ? pct(totalPct) : "—"}</b><small class="amt">${(up?"+":"")+money(t.pnl)} U</small><small>总成本 ${money(t.cost)} U · 按买入成本</small>`;
+  totalEl.innerHTML = `<span>总仓位 · 今年来</span><b>${t.cost ? pct(totalPct) : "—"}</b><small class="amt">${(up?"+":"")+money(t.pnl)} USD</small><small>总成本 ${money(t.cost)} USD · 按买入成本</small>`;
 
   document.getElementById("kpis").innerHTML = cards.map(([k,v,s,tone])=>`<div class="kpi ${tone}"><span>${k}</span><b>${v}</b><small>${s}</small></div>`).join("") + `<div class="cost-note">总成本 = 现金本金 + 股票/基金本金。浮动盈亏 = 现价市值 − 总成本。</div>`;
 
@@ -325,10 +326,10 @@ function render() {
     const del = l.type === "cash" ? "" : `<button class="del" data-del="${i}">删除</button>`;
     return `<div class="card">
       <div class="row"><div><div class="name click" data-focus="${esc(l.ticker||"")}">${esc(l.name)}</div><div class="ticker">${esc(l.ticker)}</div></div>
-      <div class="mv ${cls}">${money(v)} U<div style="font-size:12px">${p>=0?"+":""}${money(p)}${costPct}</div>${dayTxt}${del}</div></div>
+      <div class="mv ${cls}">${money(v)} USD<div style="font-size:12px">${p>=0?"+":""}${money(p)}${costPct}</div>${dayTxt}${del}</div></div>
       <div class="grid">
         <label>股数<input data-i="${i}" data-k="shares" value="${l.shares}" inputmode="decimal"></label>
-        <label>总成本 U<input data-i="${i}" data-k="cost" value="${l.cost}" inputmode="decimal"></label>
+        <label>总成本 USD<input data-i="${i}" data-k="cost" value="${l.cost}" inputmode="decimal"></label>
         <label>现价<input data-i="${i}" data-k="price" value="${l.price}" inputmode="decimal" ${l.type==="cash"?"disabled":""}></label>
         <label>单股成本<input value="${l.shares>0?(l.cost/l.shares).toFixed(2):"—"}" disabled></label>
       </div>
@@ -751,7 +752,7 @@ function showTip(e) {
   tip.style.left = (best.x / 360 * 100) + "%";
   tip.style.top = (best.y / 150 * 100 - 8) + "%";
   const d = best.t ? new Date(best.t).toLocaleString("zh-CN",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}) : "";
-  tip.innerHTML = `<b>${money(best.v)} U</b>${d}`;
+  tip.innerHTML = `<b>${money(best.v)} USD</b>${d}`;
   const cross = document.getElementById("cross");
   if (cross) { cross.setAttribute("x1", best.x); cross.setAttribute("x2", best.x); cross.setAttribute("visibility", "visible"); }
 }
