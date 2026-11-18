@@ -5,8 +5,8 @@
       "name": "现金 USD",
       "ticker": "USDT",
       "type": "cash",
-      "shares": 21025,
-      "cost": 21025,
+      "shares": 20650,
+      "cost": 20650,
       "price": 1
     },
     {
@@ -24,8 +24,8 @@
       "name": "Rocket Lab",
       "ticker": "RKLB",
       "type": "stock",
-      "shares": 53.578,
-      "cost": 3375,
+      "shares": 60.521,
+      "cost": 3750,
       "price": 55.84,
       "prev": 57.69
     },
@@ -59,6 +59,6 @@
       "prev": 285.07
     }
   ],
-  "savedAt": 1795014109916,
+  "savedAt": 1795016754562,
   "version": 1
 }
