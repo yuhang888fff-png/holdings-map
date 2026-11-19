@@ -44,6 +44,8 @@
   .kpi.wide { grid-column: 1 / -1; }
   .kpi.up b, .kpi.up small { color:#0a9d62; }
   .kpi.down b, .kpi.down small { color:var(--down); }
+  .kpi small .up { color:#0a9d62; }
+  .kpi small .down { color:var(--down); }
   .card { background:var(--card); border-radius:18px; padding:14px; margin-bottom:10px; border:1px solid var(--line); }
   .row { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
   .name { font-weight:600; font-size:16px; }
@@ -275,7 +277,7 @@ function render() {
   const maxNonCashPct = maxNonCash ? maxNonCash.v / t.value * 100 : 0;
 
   const cards = [
-    ["总成本", money(capital)+" USD", "含现金", "wide"],
+    ["总成本", money(capital)+" USD", "含现金" + ((t.closedCost || t.realized) ? `<div class="${t.realized < -0.005 ? "down" : t.realized > 0.005 ? "up" : ""}">已实现盈亏 ${(t.realized>=0?"+":"")}${money(t.realized)} USD</div>` : ""), "wide"],
     ["总市值", money(t.value)+" USD", "按现价", ""],
     ["现金 USD", money(t.cash)+" USD", share(t.cash, t.value), ""],
     ["非现金仓位", money(t.invested)+" USD", share(t.invested, t.value), ""],
