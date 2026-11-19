@@ -50,6 +50,9 @@
   .name.click:active { opacity:.6; }
   .ticker { color:var(--muted); font-size:11px; margin-top:1px; letter-spacing:.4px; }
   .del { border:1px solid #f5d0d4; background:var(--card); color:var(--down); font-size:12px; height:26px; padding:0 8px; border-radius:7px; margin-top:6px; }
+  .close { border:1px solid var(--line); background:var(--card); color:var(--ink); font-size:12px; height:26px; padding:0 8px; border-radius:7px; margin:6px 6px 0 0; }
+  .pnl-banner small.pos { color:#0a9d62; }
+  .pnl-banner small.neg { color:var(--down); }
   .fold { color:var(--muted); font-size:13px; margin:4px 4px 14px; padding:8px 0; cursor:pointer; }
   .mv { text-align:right; font-variant-numeric:tabular-nums; font-weight:600; font-size:16px; }
   .mv div { font-weight:400; }
@@ -237,7 +240,9 @@ function totals() {
   const cash = lots.filter(x=>x.type==="cash").reduce((a,b)=>a+mv(b),0);
   const cost = lots.reduce((a,b)=>a+Number(b.cost||0),0);
   const cashCost = lots.filter(x=>x.type==="cash").reduce((a,b)=>a+Number(b.cost||0),0);
-  return {value, cash, cost, invested:value-cash, investedCost:cost-cashCost, pnl:value-cost, today:todayPnl()};
+  const realized = lots.reduce((a,b)=>a+Number(b.realized||0),0);
+  const closedCost = lots.reduce((a,b)=>a+Number(b.closedCost||0),0);
+  return {value, cash, cost, invested:value-cash, investedCost:cost-cashCost, pnl:value-cost, today:todayPnl(), realized, closedCost};
 }
 function todayPnl() {
   return lots.reduce((a, l) => {
@@ -278,10 +283,14 @@ function render() {
     ["集中度", top1.toFixed(1)+"%", "前1大持仓", ""],
     ["前3集中度", top3.toFixed(1)+"%", "前3大持仓合计", ""],
   ];
-  const totalPct = t.cost ? t.pnl / t.cost * 100 : 0;
+  const bookCost = t.cost + t.closedCost;
+  const bookPnl = t.pnl + t.realized;
+  const bookUp = bookPnl >= 0;
+  const totalPct = bookCost ? bookPnl / bookCost * 100 : 0;
   const totalEl = document.getElementById("totalPnl");
-  totalEl.className = "pnl-banner " + (t.pnl >= 0 ? "up" : "down");
-  totalEl.innerHTML = `<span>总仓位 · 今年来</span><b>${t.cost ? pct(totalPct) : "—"}</b><small class="amt">${(up?"+":"")+money(t.pnl)} USD</small><small>总成本 ${money(t.cost)} USD · 按买入成本</small>`;
+  totalEl.className = "pnl-banner " + (bookUp ? "up" : "down");
+  const realizedLine = t.closedCost > 0 ? `<small class="${t.realized>=0?"pos":"neg"}">已实现 ${(t.realized>=0?"+":"")+money(t.realized)} USD</small>` : "";
+  totalEl.innerHTML = `<span>总仓位 · 今年来</span><b>${bookCost ? pct(totalPct) : "—"}</b><small class="amt">${(bookUp?"+":"")+money(bookPnl)} USD</small><small>总成本 ${money(bookCost)} USD · 按买入成本</small>${realizedLine}`;
 
   document.getElementById("kpis").innerHTML = cards.map(([k,v,s,tone])=>`<div class="kpi ${tone}"><span>${k}</span><b>${v}</b><small>${s}</small></div>`).join("") + `<div class="cost-note">总成本 = 现金本金 + 股票/基金本金。浮动盈亏 = 现价市值 − 总成本。</div>`;
 
@@ -323,10 +332,21 @@ function render() {
     const day = (l.type==="stock" && Number(l.shares)>0 && Number(l.prev)>0 && Number(l.price)>0) ? Number(l.shares)*(Number(l.price)-Number(l.prev)) : null;
     const dayTxt = day==null ? "" : `<div style="font-size:12px">${day>=0?"+":""}${money(day)} 今日</div>`;
     const costPct = Number(l.cost) > 0 ? " " + pct(p / Number(l.cost) * 100) : "";
+    if (Number(l.closedCost) > 0 || Number(l.realized)) {
+      const r = Number(l.realized) || 0;
+      const base = Number(l.closedCost) || 0;
+      const rPct = base ? " " + pct(r / base * 100) : "";
+      const rCls = r > 0.005 ? "up" : r < -0.005 ? "down" : "";
+      return `<div class="card">
+        <div class="row"><div><div class="name">${esc(l.name)}</div><div class="ticker">${esc(l.ticker)} · 已清仓</div></div>
+        <div class="mv ${rCls}">${r>=0?"+":""}${money(r)} USD<div style="font-size:12px">已实现${rPct}</div><button class="del" data-del="${i}">删除</button></div></div>
+      </div>`;
+    }
+    const closeBtn = l.type === "cash" ? "" : `<button class="close" data-close="${i}">清仓</button>`;
     const del = l.type === "cash" ? "" : `<button class="del" data-del="${i}">删除</button>`;
     return `<div class="card">
       <div class="row"><div><div class="name click" data-focus="${esc(l.ticker||"")}">${esc(l.name)}</div><div class="ticker">${esc(l.ticker)}</div></div>
-      <div class="mv ${cls}">${money(v)} USD<div style="font-size:12px">${p>=0?"+":""}${money(p)}${costPct}</div>${dayTxt}${del}</div></div>
+      <div class="mv ${cls}">${money(v)} USD<div style="font-size:12px">${p>=0?"+":""}${money(p)}${costPct}</div>${dayTxt}${closeBtn}${del}</div></div>
       <div class="grid">
         <label>股数<input data-i="${i}" data-k="shares" value="${l.shares}" inputmode="decimal"></label>
         <label>总成本 USD<input data-i="${i}" data-k="cost" value="${l.cost}" inputmode="decimal"></label>
@@ -335,8 +355,11 @@ function render() {
       </div>
     </div>`;
   }).join("") + (function(){
-    const n = lots.filter(isEmpty).length;
-    return n ? `<div class="fold" id="fold">${showEmpty?"收起":"已清仓 "+n+" 只，点开"}</div>` : "";
+    const closed = lots.filter(isEmpty);
+    const n = closed.length;
+    const r = closed.reduce((a,l)=>a+Number(l.realized||0),0);
+    const bit = r ? " · 已实现 " + (r>=0?"+":"") + money(r) + " USD" : "";
+    return n ? `<div class="fold" id="fold">${showEmpty?"收起":"已清仓 "+n+" 只"+bit+"，点开"}</div>` : "";
   })();
   const fold = document.getElementById("fold");
   if (fold) fold.onclick = () => { showEmpty = !showEmpty; render(); };
@@ -374,6 +397,44 @@ function render() {
       drawChart();
     });
   });
+  document.querySelectorAll("button[data-close]").forEach(el => {
+    el.addEventListener("click", () => closeLot(Number(el.dataset.close)));
+  });
+}
+function closeLot(i) {
+  const l = lots[i];
+  if (!l || l.type === "cash") return;
+  const shares = Number(l.shares) || 0;
+  const cost = Number(l.cost) || 0;
+  if (!(shares > 0) && !(cost > 0)) return;
+  let proceeds = shares > 0 && Number(l.price) > 0 ? shares * Number(l.price) : NaN;
+  if (!Number.isFinite(proceeds)) {
+    const raw = prompt("没有现价，填卖出总金额 USD");
+    if (raw == null) return;
+    proceeds = Number(String(raw).trim());
+    if (!Number.isFinite(proceeds) || proceeds < 0) return;
+  }
+  const realized = proceeds - cost;
+  const ok = confirm("清仓 " + l.name + "？卖出 " + money(proceeds) + " USD，实现盈亏 " + (realized>=0?"+":"") + money(realized) + " USD。卖出的钱计入现金。还没保存可以点刷新还原。");
+  if (!ok) return;
+  let cash = lots.find(x => x.type === "cash");
+  if (!cash) {
+    cash = {id:"usdt", name:"现金 USD", ticker:"USDT", type:"cash", shares:0, cost:0, price:1};
+    lots.unshift(cash);
+  }
+  cash.shares = Number(cash.shares || 0) + proceeds;
+  cash.cost = Number(cash.cost || 0) + proceeds;
+  cash.price = 1;
+  l.realized = Number(l.realized || 0) + realized;
+  l.closedCost = Number(l.closedCost || 0) + cost;
+  l.shares = 0;
+  l.cost = 0;
+  l.price = 0;
+  l.prev = 0;
+  dirty = true;
+  showEmpty = true;
+  render();
+  drawChart();
 }
 document.getElementById("add").onclick = () => {
   const ticker = (prompt("代码，比如 CRCL") || "").toUpperCase().replace(/USDT$/, "");
