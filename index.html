@@ -883,40 +883,37 @@ function applyTheme(dark) {
 }
 themeBtn.onclick = () => applyTheme(!document.body.classList.contains("dark"));
 
-const YTD_YEAR = 2026;
-const YEAR_OPEN = { QQQ:614.31, SPY:681.92 };
 const INDEX_CARDS = [
-  {id:"idx-ndx", name:"纳斯达克", pair:"QQQBUSDT", via:"QQQ"},
-  {id:"idx-spx", name:"标普500", pair:"SPYBUSDT", via:"SPY"}
+  {id:"idx-ndx", name:"纳斯达克", symbol:"^IXIC", via:"IXIC"},
+  {id:"idx-spx", name:"标普500", symbol:"^SPX", via:"SPX", fallback:"^GSPC"}
 ];
-async function indexStats(pair) {
-  const hosts = ["https://data-api.binance.vision", "https://www.binance.com"];
-  for (const host of hosts) {
-    const ctrl = new AbortController();
-    const stop = setTimeout(() => ctrl.abort(), 10000);
-    try {
-      const [kl, tk] = await Promise.all([
-        fetch(host + "/api/v3/klines?symbol=" + pair + "&interval=1d&limit=1000", {signal: ctrl.signal}),
-        fetch(host + "/api/v3/ticker/24hr?symbol=" + pair, {signal: ctrl.signal})
-      ]);
-      if (!kl.ok || !tk.ok) continue;
-      const bars = await kl.json();
-      const tick = await tk.json();
-      if (!Array.isArray(bars) || !bars.length) continue;
-      let high = 0, highT = 0;
-      bars.forEach(x => {
-        const h = Number(x[2]);
-        if (h > high) { high = h; highT = Number(x[0]); }
-      });
-      const last = Number(tick && tick.lastPrice);
-      const dayHigh = Number(tick && tick.highPrice);
-      if (dayHigh > high) { high = dayHigh; highT = Date.now(); }
-      if (!(high > 0) || !(last > 0)) continue;
-      return {last, high, highT, drop: (last - high) / high * 100};
-    } catch {}
-    finally { clearTimeout(stop); }
-  }
-  return null;
+async function indexStats(symbol) {
+  const ctrl = new AbortController();
+  const stop = setTimeout(() => ctrl.abort(), 12000);
+  try {
+    const url = "https://proxy.cors.dev/https://query1.finance.yahoo.com/v8/finance/chart/" + encodeURIComponent(symbol) + "?range=ytd&interval=1d";
+    const r = await fetch(url, {signal: ctrl.signal, credentials: "omit"});
+    if (!r.ok) return null;
+    const data = await r.json();
+    const res = data.chart && data.chart.result && data.chart.result[0];
+    if (!res) return null;
+    const meta = res.meta || {};
+    const quote = (res.indicators && res.indicators.quote && res.indicators.quote[0]) || {};
+    const highs = quote.high || [];
+    const ts = res.timestamp || [];
+    let high = 0, highT = 0;
+    highs.forEach((h, i) => {
+      const n = Number(h);
+      if (n > high) { high = n; highT = Number(ts[i]) * 1000; }
+    });
+    const last = Number(meta.regularMarketPrice);
+    const dayHigh = Number(meta.regularMarketDayHigh);
+    if (dayHigh > high) { high = dayHigh; highT = Date.now(); }
+    const ytdBase = Number(meta.chartPreviousClose);
+    if (!(high > 0) || !(last > 0)) return null;
+    return {last, high, highT, drop: (last - high) / high * 100, ytdBase};
+  } catch { return null; }
+  finally { clearTimeout(stop); }
 }
 function paintIndex(row, data) {
   const el = document.getElementById(row.id);
@@ -927,16 +924,19 @@ function paintIndex(row, data) {
     return;
   }
   const when = new Date(data.highT).toLocaleDateString("zh-CN", {month:"2-digit", day:"2-digit"});
-  const base = new Date().getFullYear() === YTD_YEAR ? YEAR_OPEN[row.via] : 0;
-  const ytd = base > 0 ? (data.last - base) / base * 100 : null;
+  const ytd = data.ytdBase > 0 ? (data.last - data.ytdBase) / data.ytdBase * 100 : null;
   const ytdCls = ytd == null ? "" : (ytd >= 0 ? "up" : "down");
   const ytdTxt = ytd == null ? "—" : pct(ytd);
   const dropCls = data.drop < -0.05 ? "down" : (data.drop > 0.05 ? "up" : "");
   el.className = "kpi";
-  el.innerHTML = `<span>${row.name}</span><div class="metric-pair"><div><span>距高点</span><b class="${dropCls}">${data.drop.toFixed(2)}%</b></div><div><span>今年来</span><b class="${ytdCls}">${ytdTxt}</b></div></div><small>现价 ${money(data.last)} · 高点 ${money(data.high)}（${when}）</small>`;
+  el.innerHTML = `<span>${row.name}</span><div class="metric-pair"><div><span>距高点</span><b class="${dropCls}">${data.drop.toFixed(2)}%</b></div><div><span>今年来</span><b class="${ytdCls}">${ytdTxt}</b></div></div><small>现价 ${money(data.last)} · 高点 ${money(data.high)}（${when}）· ${row.via}</small>`;
 }
 async function loadIndexes() {
-  await Promise.all(INDEX_CARDS.map(async (row) => paintIndex(row, await indexStats(row.pair))));
+  await Promise.all(INDEX_CARDS.map(async (row) => {
+    let data = await indexStats(row.symbol);
+    if (!data && row.fallback) data = await indexStats(row.fallback);
+    paintIndex(row, data);
+  }));
 }
 
 applyTheme(localStorage.getItem("holdings-theme") === "dark");
