@@ -5,8 +5,8 @@
       "name": "现金 USD",
       "ticker": "USDT",
       "type": "cash",
-      "shares": 22155.886,
-      "cost": 22155.886,
+      "shares": 21725.886,
+      "cost": 21725.886,
       "price": 1
     },
     {
@@ -14,10 +14,10 @@
       "name": "Circle",
       "ticker": "CRCL",
       "type": "stock",
-      "shares": 141.424,
-      "cost": 10800,
-      "price": 56.38,
-      "prev": 54.13
+      "shares": 150,
+      "cost": 11230,
+      "price": 49.17,
+      "prev": 54.36
     },
     {
       "id": "rklb",
@@ -26,8 +26,8 @@
       "type": "stock",
       "shares": 60.521,
       "cost": 3750,
-      "price": 54.76,
-      "prev": 54.6
+      "price": 47.2,
+      "prev": 52.29
     },
     {
       "id": "otc",
@@ -45,8 +45,8 @@
       "type": "stock",
       "shares": 0,
       "cost": 0,
-      "price": 0,
-      "prev": 0,
+      "price": 129.04,
+      "prev": 140.19,
       "realized": 5.885999999999967,
       "closedCost": 1500
     },
@@ -57,10 +57,10 @@
       "type": "stock",
       "shares": 15.621,
       "cost": 4500,
-      "price": 292.55,
-      "prev": 282.8
+      "price": 277.76,
+      "prev": 290.4
     }
   ],
-  "savedAt": 1795099669619,
+  "savedAt": 1795191978575,
   "version": 1
 }
