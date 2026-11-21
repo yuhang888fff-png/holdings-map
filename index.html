@@ -503,9 +503,9 @@ async function getCloudFile(token) {
   return { sha: d.sha, savedAt };
 }
 
-async function pushToCloud(token, payload) {
+async function pushToCloud(token, payload, force) {
   const meta = await getCloudFile(token);
-  if (meta.savedAt > baseSavedAt + 1500) throw new Error("conflict");
+  if (!force && meta.savedAt > baseSavedAt + 1500) throw new Error("conflict");
   const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
   const r = await fetch("https://api.github.com/repos/" + GH_OWNER + "/" + GH_REPO + "/contents/" + DATA_FILE, {
     method: "PUT",
@@ -571,14 +571,29 @@ document.getElementById("syncNow").onclick = async () => {
   status.textContent = "正在同步…";
   const payload = { lots, savedAt: Date.now(), version: 1 };
   try {
-    await pushToCloud(token, payload);
+    await pushToCloud(token, payload, false);
     localStorage.setItem(KEY, JSON.stringify({ lots, savedAt: payload.savedAt }));
     baseSavedAt = payload.savedAt;
     dirty = false;
     fromSeed = false;
     status.textContent = "已同步到云端 " + new Date(payload.savedAt).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   } catch (e) {
-    status.textContent = e.message === "conflict" ? "云端有更新，请先拉取再同步" : "同步失败";
+    if (e.message === "conflict") {
+      const ok = confirm("云端有较新的仓位。确定用这台手机的仓位覆盖云端？覆盖后云端旧数据会被换成现在这台的。");
+      if (!ok) { status.textContent = "已取消。可先点「从云端拉取」"; }
+      else {
+        try {
+          await pushToCloud(token, payload, true);
+          localStorage.setItem(KEY, JSON.stringify({ lots, savedAt: payload.savedAt }));
+          baseSavedAt = payload.savedAt;
+          dirty = false;
+          fromSeed = false;
+          status.textContent = "已用本机覆盖云端 " + new Date(payload.savedAt).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+        } catch (e2) {
+          status.textContent = "覆盖失败";
+        }
+      }
+    } else status.textContent = "同步失败";
   } finally {
     syncing = false;
   }
