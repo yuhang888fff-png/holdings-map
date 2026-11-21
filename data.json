@@ -16,8 +16,8 @@
       "type": "stock",
       "shares": 150,
       "cost": 11230,
-      "price": 49.35,
-      "prev": 51.42
+      "price": 49.41,
+      "prev": 51.61
     },
     {
       "id": "rklb",
@@ -26,17 +26,17 @@
       "type": "stock",
       "shares": 60.521,
       "cost": 3750,
-      "price": 47.64,
-      "prev": 50.04
+      "price": 47.58,
+      "prev": 49.86
     },
     {
       "id": "otc",
       "name": "场外基金",
       "ticker": "OTC",
       "type": "fund",
-      "shares": 0,
+      "shares": 1,
       "cost": 3800,
-      "price": 0
+      "price": 3400
     },
     {
       "id": "spcx",
@@ -45,8 +45,8 @@
       "type": "stock",
       "shares": 0,
       "cost": 0,
-      "price": 130.86,
-      "prev": 131.5,
+      "price": 130.67,
+      "prev": 131.73,
       "realized": 5.885999999999967,
       "closedCost": 1500
     },
@@ -57,10 +57,10 @@
       "type": "stock",
       "shares": 15.621,
       "cost": 4500,
-      "price": 271.78,
-      "prev": 273.7
+      "price": 272.23,
+      "prev": 278.62
     }
   ],
-  "savedAt": 1795271944405,
+  "savedAt": 1795272672396,
   "version": 1
 }
