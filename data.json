@@ -5,8 +5,8 @@
       "name": "现金 USD",
       "ticker": "USDT",
       "type": "cash",
-      "shares": 20225.886,
-      "cost": 20225.886,
+      "shares": 18725.886,
+      "cost": 18725.886,
       "price": 1
     },
     {
@@ -16,8 +16,8 @@
       "type": "stock",
       "shares": 150,
       "cost": 11230,
-      "price": 53.96,
-      "prev": 50.03
+      "price": 53.08,
+      "prev": 50.07
     },
     {
       "id": "rklb",
@@ -26,8 +26,8 @@
       "type": "stock",
       "shares": 60.521,
       "cost": 3750,
-      "price": 52.3,
-      "prev": 48.06
+      "price": 50.48,
+      "prev": 48.09
     },
     {
       "id": "otc",
@@ -45,8 +45,8 @@
       "type": "stock",
       "shares": 0,
       "cost": 0,
-      "price": 138.24,
-      "prev": 130.6,
+      "price": 138.22,
+      "prev": 130.53,
       "realized": 5.885999999999967,
       "closedCost": 1500
     },
@@ -57,20 +57,20 @@
       "type": "stock",
       "shares": 15.621,
       "cost": 4500,
-      "price": 283.31,
-      "prev": 274.6
+      "price": 282.66,
+      "prev": 273.96
     },
     {
       "id": "qqq1795341646748",
       "name": "纳指ETF",
       "ticker": "QQQ",
       "type": "stock",
-      "shares": 2.396,
-      "cost": 1500,
-      "price": 652.73,
-      "prev": 626.21
+      "shares": 4.683,
+      "cost": 3000,
+      "price": 655.16,
+      "prev": 625.55
     }
   ],
-  "savedAt": 1795443876557,
+  "savedAt": 1795448645287,
   "version": 1
 }
