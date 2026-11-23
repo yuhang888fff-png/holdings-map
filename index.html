@@ -115,11 +115,13 @@
   .pnl-zone .pnl-banner { margin:0 0 10px; }
   .idx-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:0; }
   .idx-row .kpi b { font-size:22px; }
+  .idx-extra { margin-top:8px; padding-top:8px; border-top:1px solid var(--line); }
+  .idx-extra .metric-pair { margin-top:4px; }
   @media (max-width:720px) {
     .idx-row { gap:8px; }
     .idx-row .kpi { padding:12px 8px; overflow:hidden; }
     .idx-row .metric-pair { gap:2px; margin-top:6px; }
-    .idx-row .metric-pair b { font-size:14px; letter-spacing:-.4px; white-space:nowrap; }
+    .idx-row .metric-pair b, .idx-row .idx-extra .metric-pair b { font-size:14px; letter-spacing:-.4px; white-space:nowrap; }
     .idx-row .kpi small { font-size:10px; line-height:1.35; }
   }
   @media (min-width:900px) {
@@ -906,7 +908,7 @@ function applyTheme(dark) {
 themeBtn.onclick = () => applyTheme(!document.body.classList.contains("dark"));
 
 const INDEX_CARDS = [
-  {id:"idx-ndx", name:"纳斯达克", symbol:"^IXIC", via:"IXIC"},
+  {id:"idx-ndx", name:"纳斯达克", symbol:"^IXIC", via:"IXIC", extra:"QQQ"},
   {id:"idx-spx", name:"标普500", symbol:"^SPX", via:"SPX", fallback:"^GSPC"}
 ];
 async function indexStats(symbol) {
@@ -937,12 +939,21 @@ async function indexStats(symbol) {
   } catch { return null; }
   finally { clearTimeout(stop); }
 }
-function paintIndex(row, data) {
+function indexBlock(data, label) {
+  if (!data) return `<div class="idx-extra"><span>${label}</span><small>行情没拉到</small></div>`;
+  const when = new Date(data.highT).toLocaleDateString("zh-CN", {month:"2-digit", day:"2-digit"});
+  const ytd = data.ytdBase > 0 ? (data.last - data.ytdBase) / data.ytdBase * 100 : null;
+  const ytdCls = ytd == null ? "" : (ytd >= 0 ? "up" : "down");
+  const ytdTxt = ytd == null ? "—" : pct(ytd);
+  const dropCls = data.drop < -0.05 ? "down" : (data.drop > 0.05 ? "up" : "");
+  return `<div class="idx-extra"><span>${label}</span><div class="metric-pair"><div><span>距高点</span><b class="${dropCls}">${data.drop.toFixed(2)}%</b></div><div><span>今年来</span><b class="${ytdCls}">${ytdTxt}</b></div></div><small>现价 ${money(data.last)} · 高点 ${money(data.high)}（${when}）</small></div>`;
+}
+function paintIndex(row, data, extra) {
   const el = document.getElementById(row.id);
   if (!el) return;
   if (!data) {
     el.className = "kpi";
-    el.innerHTML = `<span>${row.name}</span><div class="metric-pair"><div><span>距高点</span><b>—</b></div><div><span>今年来</span><b>—</b></div></div><small>行情没拉到</small>`;
+    el.innerHTML = `<span>${row.name}</span><div class="metric-pair"><div><span>距高点</span><b>—</b></div><div><span>今年来</span><b>—</b></div></div><small>行情没拉到</small>` + (row.extra ? indexBlock(extra, row.extra) : "");
     return;
   }
   const when = new Date(data.highT).toLocaleDateString("zh-CN", {month:"2-digit", day:"2-digit"});
@@ -951,13 +962,14 @@ function paintIndex(row, data) {
   const ytdTxt = ytd == null ? "—" : pct(ytd);
   const dropCls = data.drop < -0.05 ? "down" : (data.drop > 0.05 ? "up" : "");
   el.className = "kpi";
-  el.innerHTML = `<span>${row.name}</span><div class="metric-pair"><div><span>距高点</span><b class="${dropCls}">${data.drop.toFixed(2)}%</b></div><div><span>今年来</span><b class="${ytdCls}">${ytdTxt}</b></div></div><small>现价 ${money(data.last)} · 高点 ${money(data.high)}（${when}）· ${row.via}</small>`;
+  el.innerHTML = `<span>${row.name}</span><div class="metric-pair"><div><span>距高点</span><b class="${dropCls}">${data.drop.toFixed(2)}%</b></div><div><span>今年来</span><b class="${ytdCls}">${ytdTxt}</b></div></div><small>现价 ${money(data.last)} · 高点 ${money(data.high)}（${when}）· ${row.via}</small>` + (row.extra ? indexBlock(extra, row.extra) : "");
 }
 async function loadIndexes() {
   await Promise.all(INDEX_CARDS.map(async (row) => {
     let data = await indexStats(row.symbol);
     if (!data && row.fallback) data = await indexStats(row.fallback);
-    paintIndex(row, data);
+    const extra = row.extra ? await indexStats(row.extra) : null;
+    paintIndex(row, data, extra);
   }));
 }
 
