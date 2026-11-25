@@ -16,8 +16,8 @@
       "type": "stock",
       "shares": 150,
       "cost": 11230,
-      "price": 53.08,
-      "prev": 50.07
+      "price": 47.2,
+      "prev": 51.1
     },
     {
       "id": "rklb",
@@ -26,8 +26,8 @@
       "type": "stock",
       "shares": 60.521,
       "cost": 3750,
-      "price": 50.48,
-      "prev": 48.09
+      "price": 45.37,
+      "prev": 49.79
     },
     {
       "id": "otc",
@@ -36,7 +36,7 @@
       "type": "fund",
       "shares": 1,
       "cost": 3800,
-      "price": 3500
+      "price": 3800
     },
     {
       "id": "spcx",
@@ -45,8 +45,8 @@
       "type": "stock",
       "shares": 0,
       "cost": 0,
-      "price": 138.22,
-      "prev": 130.53,
+      "price": 124.4,
+      "prev": 134.37,
       "realized": 5.885999999999967,
       "closedCost": 1500
     },
@@ -57,8 +57,8 @@
       "type": "stock",
       "shares": 15.621,
       "cost": 4500,
-      "price": 282.66,
-      "prev": 273.96
+      "price": 277.39,
+      "prev": 284.73
     },
     {
       "id": "qqq1795341646748",
@@ -67,10 +67,10 @@
       "type": "stock",
       "shares": 4.683,
       "cost": 3000,
-      "price": 655.16,
-      "prev": 625.55
+      "price": 632.02,
+      "prev": 651.51
     }
   ],
-  "savedAt": 1795448645287,
+  "savedAt": 1795581160897,
   "version": 1
 }
