@@ -908,9 +908,38 @@ function applyTheme(dark) {
 themeBtn.onclick = () => applyTheme(!document.body.classList.contains("dark"));
 
 const INDEX_CARDS = [
-  {id:"idx-ndx", name:"纳斯达克", symbol:"^IXIC", via:"IXIC", extra:"QQQ"},
-  {id:"idx-spx", name:"标普500", symbol:"^SPX", via:"SPX", fallback:"^GSPC"}
+  {id:"idx-ndx", name:"纳斯达克", symbol:"^IXIC", via:"IXIC", extra:"QQQ", extraPair:"QQQBUSDT", extraBase:614.31},
+  {id:"idx-spx", name:"标普500", pair:"SPYBUSDT", via:"SPY", ytdBase:681.92, source:"binance"}
 ];
+async function binanceStats(pair) {
+  const hosts = ["https://data-api.binance.vision", "https://www.binance.com"];
+  for (const host of hosts) {
+    const ctrl = new AbortController();
+    const stop = setTimeout(() => ctrl.abort(), 10000);
+    try {
+      const [kl, tk] = await Promise.all([
+        fetch(host + "/api/v3/klines?symbol=" + pair + "&interval=1d&limit=1000", {signal: ctrl.signal}),
+        fetch(host + "/api/v3/ticker/24hr?symbol=" + pair, {signal: ctrl.signal})
+      ]);
+      if (!kl.ok || !tk.ok) continue;
+      const bars = await kl.json();
+      const tick = await tk.json();
+      if (!Array.isArray(bars) || !bars.length) continue;
+      let high = 0, highT = 0;
+      bars.forEach(x => {
+        const h = Number(x[2]);
+        if (h > high) { high = h; highT = Number(x[0]); }
+      });
+      const last = Number(tick && tick.lastPrice);
+      const dayHigh = Number(tick && tick.highPrice);
+      if (dayHigh > high) { high = dayHigh; highT = Date.now(); }
+      if (!(high > 0) || !(last > 0)) continue;
+      return {last, high, highT, drop: (last - high) / high * 100, ytdBase: 0, venue: "binance"};
+    } catch {}
+    finally { clearTimeout(stop); }
+  }
+  return null;
+}
 async function indexStats(symbol) {
   const ctrl = new AbortController();
   const stop = setTimeout(() => ctrl.abort(), 12000);
@@ -946,7 +975,7 @@ function indexBlock(data, label) {
   const ytdCls = ytd == null ? "" : (ytd >= 0 ? "up" : "down");
   const ytdTxt = ytd == null ? "—" : pct(ytd);
   const dropCls = data.drop < -0.05 ? "down" : (data.drop > 0.05 ? "up" : "");
-  return `<div class="idx-extra"><span>${label}</span><div class="metric-pair"><div><span>距高点</span><b class="${dropCls}">${data.drop.toFixed(2)}%</b></div><div><span>今年来</span><b class="${ytdCls}">${ytdTxt}</b></div></div><small>现价 ${money(data.last)} · 高点 ${money(data.high)}（${when}）</small></div>`;
+  return `<div class="idx-extra"><span>${label}</span><div class="metric-pair"><div><span>距高点</span><b class="${dropCls}">${data.drop.toFixed(2)}%</b></div><div><span>今年来</span><b class="${ytdCls}">${ytdTxt}</b></div></div><small>现价 ${money(data.last)} · 高点 ${money(data.high)}（${when}）${data.venue==="binance"?" · 币安":""}</small></div>`;
 }
 function paintIndex(row, data, extra) {
   const el = document.getElementById(row.id);
@@ -962,13 +991,23 @@ function paintIndex(row, data, extra) {
   const ytdTxt = ytd == null ? "—" : pct(ytd);
   const dropCls = data.drop < -0.05 ? "down" : (data.drop > 0.05 ? "up" : "");
   el.className = "kpi";
-  el.innerHTML = `<span>${row.name}</span><div class="metric-pair"><div><span>距高点</span><b class="${dropCls}">${data.drop.toFixed(2)}%</b></div><div><span>今年来</span><b class="${ytdCls}">${ytdTxt}</b></div></div><small>现价 ${money(data.last)} · 高点 ${money(data.high)}（${when}）· ${row.via}</small>` + (row.extra ? indexBlock(extra, row.extra) : "");
+  el.innerHTML = `<span>${row.name}</span><div class="metric-pair"><div><span>距高点</span><b class="${dropCls}">${data.drop.toFixed(2)}%</b></div><div><span>今年来</span><b class="${ytdCls}">${ytdTxt}</b></div></div><small>现价 ${money(data.last)} · 高点 ${money(data.high)}（${when}）· ${row.via}${data.venue==="binance"?" · 币安":""}</small>` + (row.extra ? indexBlock(extra, row.extra) : "");
 }
 async function loadIndexes() {
   await Promise.all(INDEX_CARDS.map(async (row) => {
-    let data = await indexStats(row.symbol);
-    if (!data && row.fallback) data = await indexStats(row.fallback);
-    const extra = row.extra ? await indexStats(row.extra) : null;
+    let data = null;
+    if (row.source === "binance") {
+      data = await binanceStats(row.pair);
+      if (data && new Date().getFullYear() === 2026) data.ytdBase = row.ytdBase;
+    } else {
+      data = await indexStats(row.symbol);
+      if (!data && row.fallback) data = await indexStats(row.fallback);
+    }
+    let extra = null;
+    if (row.extraPair) {
+      extra = await binanceStats(row.extraPair);
+      if (extra && new Date().getFullYear() === 2026) extra.ytdBase = row.extraBase;
+    } else if (row.extra) extra = await indexStats(row.extra);
     paintIndex(row, data, extra);
   }));
 }
