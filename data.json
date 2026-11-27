@@ -5,8 +5,8 @@
       "name": "现金 USD",
       "ticker": "USDT",
       "type": "cash",
-      "shares": 18725.886,
-      "cost": 18725.886,
+      "shares": 18735.886,
+      "cost": 18735.886,
       "price": 1
     },
     {
@@ -17,7 +17,7 @@
       "shares": 150,
       "cost": 11230,
       "price": 50.63,
-      "prev": 49.18
+      "prev": 48.71
     },
     {
       "id": "rklb",
@@ -26,8 +26,8 @@
       "type": "stock",
       "shares": 60.521,
       "cost": 3750,
-      "price": 50.37,
-      "prev": 48.46
+      "price": 50.28,
+      "prev": 48.11
     },
     {
       "id": "otc",
@@ -45,8 +45,8 @@
       "type": "stock",
       "shares": 0,
       "cost": 0,
-      "price": 133.56,
-      "prev": 129.23,
+      "price": 133.51,
+      "prev": 128.15,
       "realized": 5.885999999999967,
       "closedCost": 1500
     },
@@ -57,8 +57,8 @@
       "type": "stock",
       "shares": 15.621,
       "cost": 4500,
-      "price": 281.34,
-      "prev": 277.07
+      "price": 281.22,
+      "prev": 274.75
     },
     {
       "id": "qqq1795341646748",
@@ -66,11 +66,11 @@
       "ticker": "QQQ",
       "type": "stock",
       "shares": 4.683,
-      "cost": 3000,
-      "price": 651.81,
-      "prev": 640.51
+      "cost": 2990,
+      "price": 651.98,
+      "prev": 636.44
     }
   ],
-  "savedAt": 1795756766375,
+  "savedAt": 1795762013860,
   "version": 1
 }
