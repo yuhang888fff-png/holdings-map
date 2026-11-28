@@ -16,8 +16,8 @@
       "type": "stock",
       "shares": 150,
       "cost": 11230,
-      "price": 50.75,
-      "prev": 48.79
+      "price": 49.77,
+      "prev": 50.1
     },
     {
       "id": "rklb",
@@ -26,8 +26,8 @@
       "type": "stock",
       "shares": 60.521,
       "cost": 3750,
-      "price": 49.79,
-      "prev": 48.03
+      "price": 50.81,
+      "prev": 50.08
     },
     {
       "id": "otc",
@@ -45,8 +45,8 @@
       "type": "stock",
       "shares": 0,
       "cost": 0,
-      "price": 131.72,
-      "prev": 129.04,
+      "price": 132.21,
+      "prev": 133.11,
       "realized": 5.885999999999967,
       "closedCost": 1500
     },
@@ -57,8 +57,8 @@
       "type": "stock",
       "shares": 15.621,
       "cost": 4500,
-      "price": 281.19,
-      "prev": 275.27
+      "price": 276.35,
+      "prev": 280.19
     },
     {
       "id": "qqq1795341646748",
@@ -67,10 +67,10 @@
       "type": "stock",
       "shares": 4.683,
       "cost": 2990,
-      "price": 649.68,
-      "prev": 636.56
+      "price": 650.92,
+      "prev": 650
     }
   ],
-  "savedAt": 1795778967957,
+  "savedAt": 1795838633543,
   "version": 1
 }
